@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Profile from './Profile';
 import {
     CheckCircle2,
     Clock,
@@ -9,13 +10,15 @@ import {
     ListTodo,
     Calendar,
     MessageSquare,
-    Award
+    Award,
+    User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const StudentDashboard = ({ user, setUser }) => {
     const [lus, setLus] = useState([]);
+    const [showProfile, setShowProfile] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -57,6 +60,10 @@ const StudentDashboard = ({ user, setUser }) => {
         navigate('/');
     };
 
+    if (showProfile) {
+        return <Profile user={user} setUser={setUser} onBack={() => setShowProfile(false)} />;
+    }
+
     return (
         <div className="min-h-screen bg-[#121212] text-white p-6 md:p-10 font-sans">
             <div className="max-w-5xl mx-auto">
@@ -71,9 +78,17 @@ const StudentDashboard = ({ user, setUser }) => {
                             <p className="text-gray-400 text-sm">Welcome back, {user.name}</p>
                         </div>
                     </div>
-                    <button onClick={handleLogout} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
-                        <LogOut size={18} /> Logout
-                    </button>
+                    <div className="flex items-center gap-6">
+                        <button
+                            onClick={() => setShowProfile(true)}
+                            className="flex items-center gap-2 hover:text-red-500 transition-colors text-sm font-medium"
+                        >
+                            <User size={18} /> Profile
+                        </button>
+                        <button onClick={handleLogout} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
+                            <LogOut size={18} /> Logout
+                        </button>
+                    </div>
                 </header>
 
                 {/* Stats Grid */}
@@ -107,7 +122,7 @@ const StudentDashboard = ({ user, setUser }) => {
                                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
                                             <div className={`p-3 rounded-2xl ${lu.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                                                    lu.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-white/5 text-gray-500'
+                                                lu.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-white/5 text-gray-500'
                                                 }`}>
                                                 {lu.status === 'Completed' ? <CheckCircle2 size={24} /> :
                                                     lu.status === 'In Progress' ? <Clock size={24} /> : <Circle size={24} />}

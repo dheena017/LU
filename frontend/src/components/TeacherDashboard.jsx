@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Profile from './Profile';
 import {
     Users,
     PlusCircle,
@@ -11,7 +12,8 @@ import {
     Search,
     MessageSquare,
     GraduationCap,
-    Calendar
+    Calendar,
+    ArrowUpDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -30,6 +32,9 @@ const TeacherDashboard = ({ user, setUser }) => {
     const [studentSearch, setStudentSearch] = useState('');
     const [gradingTarget, setGradingTarget] = useState(null); // { studentId, luId, studentName, luTitle }
     const [feedbackData, setFeedbackData] = useState({ feedback: '', grade: '' });
+    const [sortBy, setSortBy] = useState('name'); // name, assigned, completion
+    const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
+    const [showProfile, setShowProfile] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -84,9 +89,44 @@ const TeacherDashboard = ({ user, setUser }) => {
         navigate('/');
     };
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(studentSearch.toLowerCase())
-    );
+    const sortedStudents = [...students]
+        .filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()))
+        .sort((a, b) => {
+            let valA, valB;
+
+            if (sortBy === 'name') {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            } else if (sortBy === 'assigned') {
+                valA = lus.filter(lu => lu.assignedTo.includes(a.id)).length;
+                valB = lus.filter(lu => lu.assignedTo.includes(b.id)).length;
+            } else if (sortBy === 'completion') {
+                const totalA = lus.filter(lu => lu.assignedTo.includes(a.id)).length;
+                const doneA = Object.values(a.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
+                valA = totalA > 0 ? (doneA / totalA) : 0;
+
+                const totalB = lus.filter(lu => lu.assignedTo.includes(b.id)).length;
+                const doneB = Object.values(b.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
+                valB = totalB > 0 ? (doneB / totalB) : 0;
+            }
+
+            if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+            if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+    const toggleSort = (key) => {
+        if (sortBy === key) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(key);
+            setSortOrder('asc');
+        }
+        toast(`Sorted by ${key} (${sortOrder === 'asc' ? 'Descending' : 'Ascending'})`, {
+            icon: '↕️',
+            style: { borderRadius: '10px', background: '#333', color: '#fff' }
+        });
+    };
 
     const getAggregateStats = () => {
         let completed = 0, inProgress = 0, todo = 0;
@@ -109,6 +149,10 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const chartData = getAggregateStats();
 
+    if (showProfile) {
+        return <Profile user={user} setUser={setUser} onBack={() => setShowProfile(false)} />;
+    }
+
     return (
         <div className="min-h-screen bg-[#121212] text-white p-6 md:p-10 font-sans">
             <div className="max-w-7xl mx-auto">
@@ -123,9 +167,17 @@ const TeacherDashboard = ({ user, setUser }) => {
                             <p className="text-gray-400 text-sm">Welcome back, {user.name}</p>
                         </div>
                     </div>
-                    <button onClick={handleLogout} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
-                        <LogOut size={18} /> Logout
-                    </button>
+                    <div className="flex items-center gap-6">
+                        <button
+                            onClick={() => setShowProfile(true)}
+                            className="flex items-center gap-2 hover:text-red-500 transition-colors text-sm font-medium"
+                        >
+                            <User size={18} /> Profile
+                        </button>
+                        <button onClick={handleLogout} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
+                            <LogOut size={18} /> Logout
+                        </button>
+                    </div>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -162,9 +214,31 @@ const TeacherDashboard = ({ user, setUser }) => {
                     <div className="lg:col-span-2 space-y-8">
                         <div className="bg-[#1E1E1E] rounded-3xl border border-white/5 overflow-hidden shadow-xl">
                             <div className="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-4">
-                                <h3 className="text-xl font-bold flex items-center gap-2 text-red-500">
-                                    <LayoutDashboard size={20} /> Student Progress
-                                </h3>
+                                <div className="flex flex-col gap-1">
+                                    <h3 className="text-xl font-bold flex items-center gap-2 text-red-500">
+                                        <LayoutDashboard size={20} /> Student Progress
+                                    </h3>
+                                    <div className="flex gap-2 mt-2">
+                                        <button
+                                            onClick={() => toggleSort('name')}
+                                            className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${sortBy === 'name' ? 'bg-red-600 border-red-600' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
+                                        >
+                                            Name {sortBy === 'name' && <ArrowUpDown size={10} />}
+                                        </button>
+                                        <button
+                                            onClick={() => toggleSort('assigned')}
+                                            className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${sortBy === 'assigned' ? 'bg-red-600 border-red-600' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
+                                        >
+                                            Assigned {sortBy === 'assigned' && <ArrowUpDown size={10} />}
+                                        </button>
+                                        <button
+                                            onClick={() => toggleSort('completion')}
+                                            className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${sortBy === 'completion' ? 'bg-red-600 border-red-600' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
+                                        >
+                                            Progress {sortBy === 'completion' && <ArrowUpDown size={10} />}
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="relative w-full md:w-64">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                                     <input
@@ -186,7 +260,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {filteredStudents.map(s => {
+                                        {sortedStudents.map(s => {
                                             const studentLUs = lus.filter(lu => lu.assignedTo.includes(s.id));
                                             return (
                                                 <React.Fragment key={s.id}>
@@ -221,7 +295,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                                             <div>
                                                                                 <p className="font-bold text-sm">{lu.title}</p>
                                                                                 <p className={`text-[10px] font-bold uppercase ${status === 'Completed' ? 'text-green-500' :
-                                                                                        status === 'In Progress' ? 'text-yellow-400' : 'text-gray-500'
+                                                                                    status === 'In Progress' ? 'text-yellow-400' : 'text-gray-500'
                                                                                     }`}>{status}</p>
                                                                             </div>
                                                                             <button

@@ -130,4 +130,28 @@ app.put('/api/student/:userId/lus/:luId', (req, res) => {
 
 app.get('/api/lus', (req, res) => res.json(readJSON(LUS_FILE)));
 
+// Update Profile
+app.put('/api/profile/:userId', (req, res) => {
+    const { userId } = req.params;
+    const { name, email, bio } = req.body;
+
+    const users = readJSON(USERS_FILE);
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex !== -1) {
+        users[userIndex] = {
+            ...users[userIndex],
+            name: name || users[userIndex].name,
+            email: email || users[userIndex].email,
+            bio: bio || users[userIndex].bio
+        };
+
+        writeJSON(USERS_FILE, users);
+        const { password, ...userWithoutPassword } = users[userIndex];
+        res.json(userWithoutPassword);
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+});
+
 app.listen(PORT, () => console.log(`Backend running at http://localhost:${PORT}`));
