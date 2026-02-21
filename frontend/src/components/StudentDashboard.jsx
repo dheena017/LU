@@ -23,6 +23,7 @@ import Sidebar from './Sidebar';
 import Profile from './Profile';
 import LoadingPage from './LoadingPage';
 import { io } from 'socket.io-client';
+import confetti from 'canvas-confetti';
 
 const socket = io('http://localhost:5000');
 
@@ -162,12 +163,24 @@ const StudentDashboard = ({ user, setUser }) => {
     const updateStatus = async (luId, status) => {
         try {
             await axios.put(`http://localhost:5000/api/student/${user.id}/lus/${luId}`, { status });
-            toast.success(`Unit marked as ${status}`, {
-                style: { borderRadius: '10px', background: '#333', color: '#fff' },
-            });
+
+            if (status === 'Completed') {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#DC2626', '#ffffff', '#000000']
+                });
+                toast.success('Amazing work! LU Completed! 🎊', {
+                    style: { borderRadius: '10px', background: '#333', color: '#fff' }
+                });
+            } else {
+                toast.success(`Unit marked as ${status}`);
+            }
+
             fetchMyLus();
         } catch (err) {
-            toast.error('Failed to update status.');
+            toast.error("Failed to update status");
         }
     };
 
