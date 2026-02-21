@@ -25,26 +25,23 @@ import { io } from 'socket.io-client';
 const socket = io('http://localhost:5000');
 
 const calculateStreaks = (activityArray = []) => {
-    if (activityArray.length === 0) return { current: 0, best: 0 };
+    if (activityArray.length === 0) return { current: 0, best: 0, total: 0 };
 
     // Get unique dates and sort them descending
     const sortedDates = [...new Set(activityArray)].sort((a, b) => new Date(b) - new Date(a));
 
     let currentStreak = 0;
     let bestStreak = 0;
-    let tempStreak = 0;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
     const latestDateStr = sortedDates[0];
-    const latestDate = new Date(latestDateStr);
-    latestDate.setHours(0, 0, 0, 0);
 
     // Check if the streak is active (today or yesterday)
-    const isActive = latestDate.getTime() === today.getTime() || latestDate.getTime() === yesterday.getTime();
+    const isActive = latestDateStr === todayStr || latestDateStr === yesterdayStr;
 
     if (isActive) {
         currentStreak = 1;
@@ -63,7 +60,7 @@ const calculateStreaks = (activityArray = []) => {
     }
 
     // Best Streak Calculation
-    tempStreak = 1;
+    let tempStreak = 1;
     bestStreak = 1;
     for (let i = 0; i < sortedDates.length - 1; i++) {
         const current = new Date(sortedDates[i]);
@@ -257,7 +254,7 @@ const StudentDashboard = ({ user, setUser }) => {
                                         {[...Array(7)].map((_, dayIndex) => {
                                             // Real Activity Logic
                                             const day = new Date();
-                                            day.setDate(day.getDate() - (14 - weekIndex) * 7 - (6 - dayIndex));
+                                            day.setUTCDate(day.getUTCDate() - (14 - weekIndex) * 7 - (6 - dayIndex));
                                             const dateString = day.toISOString().split('T')[0];
 
                                             const activityCount = (userData.learningActivity || []).filter(d => d === dateString).length;
