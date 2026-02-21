@@ -145,6 +145,11 @@ app.put('/api/student/:userId/lus/:luId', (req, res) => {
             status: status
         };
 
+        // Log Activity for Heatmap
+        if (!users[userIndex].learningActivity) users[userIndex].learningActivity = [];
+        const today = new Date().toISOString().split('T')[0];
+        users[userIndex].learningActivity.push(today);
+
         writeJSON(USERS_FILE, users);
 
         // Notify of status update

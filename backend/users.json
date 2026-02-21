@@ -17,7 +17,27 @@
     "progress": {
       "1": "Completed",
       "2": "Completed"
-    }
+    },
+    "learningActivity": [
+      "2026-02-21",
+      "2026-02-21",
+      "2026-02-20",
+      "2026-02-18",
+      "2026-02-15",
+      "2026-02-15",
+      "2026-02-14",
+      "2026-02-12",
+      "2026-02-11",
+      "2026-02-10",
+      "2026-02-09",
+      "2026-02-09",
+      "2026-02-08",
+      "2026-02-05",
+      "2026-02-01",
+      "2026-01-28",
+      "2026-01-25",
+      "2026-01-20"
+    ]
   },
   {
     "id": "s2",
@@ -26,7 +46,8 @@
     "password": "pass",
     "role": "student",
     "batch": "AI/ML 2024",
-    "completedLUs": []
+    "completedLUs": [],
+    "learningActivity": []
   },
   {
     "id": "s3",
@@ -35,7 +56,8 @@
     "password": "pass",
     "role": "student",
     "batch": "Web Dev 2024",
-    "completedLUs": []
+    "completedLUs": [],
+    "learningActivity": []
   },
   {
     "id": "s4",
@@ -44,6 +66,7 @@
     "password": "pass",
     "role": "student",
     "batch": "AI/ML 2024",
-    "completedLUs": []
+    "completedLUs": [],
+    "learningActivity": []
   }
 ]

@@ -22,8 +22,67 @@ import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:5000');
 
+const calculateStreaks = (activityArray = []) => {
+    if (activityArray.length === 0) return { current: 0, best: 0 };
+
+    // Get unique dates and sort them descending
+    const sortedDates = [...new Set(activityArray)].sort((a, b) => new Date(b) - new Date(a));
+
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let tempStreak = 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const latestDateStr = sortedDates[0];
+    const latestDate = new Date(latestDateStr);
+    latestDate.setHours(0, 0, 0, 0);
+
+    // Check if the streak is active (today or yesterday)
+    const isActive = latestDate.getTime() === today.getTime() || latestDate.getTime() === yesterday.getTime();
+
+    if (isActive) {
+        currentStreak = 1;
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = new Date(sortedDates[i]);
+            const next = new Date(sortedDates[i + 1]);
+            const diffTime = Math.abs(current - next);
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    // Best Streak Calculation
+    tempStreak = 1;
+    bestStreak = 1;
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+        const current = new Date(sortedDates[i]);
+        const next = new Date(sortedDates[i + 1]);
+        const diffTime = Math.abs(current - next);
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            tempStreak++;
+        } else {
+            tempStreak = 1;
+        }
+        if (tempStreak > bestStreak) bestStreak = tempStreak;
+    }
+
+    return { current: currentStreak, best: bestStreak };
+};
+
 const StudentDashboard = ({ user, setUser }) => {
     const [lus, setLus] = useState([]);
+    const [userData, setUserData] = useState(user);
     const [activeTab, setActiveTab] = useState('dashboard');
     const navigate = useNavigate();
 
@@ -53,8 +112,12 @@ const StudentDashboard = ({ user, setUser }) => {
 
     const fetchMyLus = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/student/${user.id}/lus`);
-            setLus(res.data);
+            const [lusRes, userRes] = await Promise.all([
+                axios.get(`http://localhost:5000/api/student/${user.id}/lus`),
+                axios.get(`http://localhost:5000/api/profile/${user.id}`) // We can use the profile endpoint to get latest user data
+            ]);
+            setLus(lusRes.data);
+            setUserData(userRes.data);
         } catch (err) {
             console.error(err);
         }
@@ -72,11 +135,15 @@ const StudentDashboard = ({ user, setUser }) => {
         }
     };
 
+    const streaks = calculateStreaks(userData.learningActivity || []);
+
     const stats = {
         total: lus.length,
         completed: lus.filter(l => l.status === 'Completed').length,
         inProgress: lus.filter(l => l.status === 'In Progress').length,
-        percentage: lus.length > 0 ? Math.round((lus.filter(l => l.status === 'Completed').length / lus.length) * 100) : 0
+        percentage: lus.length > 0 ? Math.round((lus.filter(l => l.status === 'Completed').length / lus.length) * 100) : 0,
+        currentStreak: streaks.current,
+        bestStreak: streaks.best
     };
 
     const handleLogout = () => {
@@ -184,9 +251,14 @@ const StudentDashboard = ({ user, setUser }) => {
                                 {[...Array(15)].map((_, weekIndex) => (
                                     <div key={weekIndex} className="flex flex-col gap-2">
                                         {[...Array(7)].map((_, dayIndex) => {
-                                            // Mock active days: more active in recent weeks
-                                            const isActive = Math.random() > (weekIndex < 10 ? 0.7 : 0.3);
-                                            const intensity = isActive ? (Math.floor(Math.random() * 4) + 1) : 0;
+                                            // Real Activity Logic
+                                            const day = new Date();
+                                            day.setDate(day.getDate() - (14 - weekIndex) * 7 - (6 - dayIndex));
+                                            const dateString = day.toISOString().split('T')[0];
+
+                                            const activityCount = (userData.learningActivity || []).filter(d => d === dateString).length;
+                                            const intensity = activityCount > 4 ? 4 : activityCount;
+
                                             const colors = [
                                                 'bg-white/5',
                                                 'bg-red-900/30',
@@ -198,7 +270,7 @@ const StudentDashboard = ({ user, setUser }) => {
                                                 <div
                                                     key={dayIndex}
                                                     className={`w-4 h-4 rounded-[4px] transition-all hover:scale-125 cursor-help ${colors[intensity]}`}
-                                                    title={`Activity Level: ${intensity}`}
+                                                    title={`${dateString}: ${activityCount} interactions`}
                                                 ></div>
                                             );
                                         })}
@@ -210,14 +282,14 @@ const StudentDashboard = ({ user, setUser }) => {
                                     <div className="p-2 bg-red-600/10 rounded-lg text-red-500"><TrendingUp size={16} /></div>
                                     <div>
                                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Current Streak</p>
-                                        <p className="text-sm font-bold">12 Days</p>
+                                        <p className="text-sm font-bold">{stats.currentStreak} Days</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 border-l border-white/5 pl-6">
                                     <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500"><Award size={16} /></div>
                                     <div>
                                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Best Streak</p>
-                                        <p className="text-sm font-bold">24 Days</p>
+                                        <p className="text-sm font-bold">{stats.bestStreak} Days</p>
                                     </div>
                                 </div>
                             </div>
