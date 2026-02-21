@@ -621,14 +621,6 @@ const TeacherDashboard = ({ user, setUser }) => {
                         <Profile user={user} setUser={setUser} onBack={() => setActiveTab('overview')} />
                     </div>
                 )}
-
-                {activeTab === 'test' && (
-                    <div className="p-20 bg-red-600 rounded-[40px] text-center">
-                        <h1 className="text-4xl font-black mb-4">SYSTEM DIAGNOSTIC</h1>
-                        <p className="text-xl font-bold">If you can see this red box, Tab Switching is WORKING.</p>
-                        <p className="mt-4 opacity-50">Current Tab: {activeTab}</p>
-                    </div>
-                )}
             </main>
 
             {/* Grading Modal */}

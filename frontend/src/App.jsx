@@ -16,9 +16,16 @@ function App() {
       const savedUser = localStorage.getItem('user');
       const token = localStorage.getItem('token');
       if (savedUser && token) {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        // CRITICAL FIX: Only restore if the user object is valid and has a role
+        if (parsedUser && parsedUser.id && parsedUser.role) {
+          setUser(parsedUser);
+        } else {
+          console.warn("Invalid user data in storage, clearing...");
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
       } else {
-        // If one is missing, clear both to be safe
         localStorage.removeItem('user');
         localStorage.removeItem('token');
       }

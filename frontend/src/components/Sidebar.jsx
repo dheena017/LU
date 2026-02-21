@@ -18,7 +18,6 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
         { id: 'students', label: 'Students', icon: Users },
         { id: 'assign', label: 'Assign LU', icon: PlusCircle },
         { id: 'profile', label: 'My Profile', icon: User },
-        { id: 'test', label: 'Debug Tab', icon: Settings },
     ];
 
     const studentLinks = [
