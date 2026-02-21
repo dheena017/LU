@@ -35,6 +35,7 @@ import {
 } from 'recharts';
 import Sidebar from './Sidebar';
 import Profile from './Profile';
+import LoadingPage from './LoadingPage';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:5000');
@@ -56,7 +57,8 @@ const TeacherDashboard = ({ user, setUser }) => {
     useEffect(() => {
         const load = async () => {
             await fetchData();
-            setLoading(false);
+            // Just a bit of extra time to ensure smooth animation
+            setTimeout(() => setLoading(false), 500);
         };
         load();
 
@@ -207,16 +209,7 @@ const TeacherDashboard = ({ user, setUser }) => {
         }
     ];
 
-    if (loading) {
-        return (
-            <div className="flex min-h-screen bg-[#121212] items-center justify-center text-white">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="font-bold text-gray-400">Loading Dashboard Data...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <LoadingPage message="Syncing Academic Records..." />;
 
     return (
         <div className="flex min-h-screen bg-[#121212] text-white font-sans">

@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import Profile from './Profile';
+import LoadingPage from './LoadingPage';
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:5000');
@@ -87,13 +88,31 @@ const StudentDashboard = ({ user, setUser }) => {
     const [filterTag, setFilterTag] = useState('All');
     const [serverStatus, setServerStatus] = useState('Checking...');
     const [error, setFetchError] = useState(null);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         axios.get('http://localhost:5000/api/lus')
             .then(() => setServerStatus('Online'))
             .catch(() => setServerStatus('Offline'));
+
+        const load = async () => {
+            await Promise.all([fetchMyLus(), fetchProfile()]);
+            // Buffer for animation
+            setTimeout(() => setLoading(false), 800);
+        };
+        load();
     }, []);
+
+    const fetchProfile = async () => {
+        if (!user?.id) return;
+        try {
+            const res = await axios.get(`http://localhost:5000/api/profile/${user.id}`);
+            setUserData(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const fetchMyLus = async () => {
         if (!user?.id) return;
@@ -170,6 +189,8 @@ const StudentDashboard = ({ user, setUser }) => {
         toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
         navigate('/');
     };
+
+    if (loading) return <LoadingPage message="Synchronising Curriculum..." />;
 
     return (
         <div className="flex min-h-screen bg-[#121212] text-white font-sans">

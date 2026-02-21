@@ -5,6 +5,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import TeacherDashboard from './components/TeacherDashboard';
 import StudentDashboard from './components/StudentDashboard';
+import LoadingPage from './components/LoadingPage';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -15,10 +16,11 @@ function App() {
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-    setLoading(false);
+    // Simulate a brief load for aesthetic finish
+    setTimeout(() => setLoading(false), 800);
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-[#121212] flex items-center justify-center text-white">Loading...</div>;
+  if (loading) return <LoadingPage />;
 
   return (
     <Router>
