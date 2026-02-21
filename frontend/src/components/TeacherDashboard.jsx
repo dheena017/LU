@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Profile from './Profile';
 import {
     Users,
     PlusCircle,
@@ -13,7 +12,9 @@ import {
     MessageSquare,
     GraduationCap,
     Calendar,
-    ArrowUpDown
+    ArrowUpDown,
+    User,
+    Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -24,17 +25,19 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts';
+import Sidebar from './Sidebar';
+import Profile from './Profile';
 
 const TeacherDashboard = ({ user, setUser }) => {
     const [students, setStudents] = useState([]);
     const [lus, setLus] = useState([]);
     const [newLu, setNewLu] = useState({ title: '', module: '', dueDate: '', assignedTo: [] });
     const [studentSearch, setStudentSearch] = useState('');
-    const [gradingTarget, setGradingTarget] = useState(null); // { studentId, luId, studentName, luTitle }
+    const [gradingTarget, setGradingTarget] = useState(null);
     const [feedbackData, setFeedbackData] = useState({ feedback: '', grade: '' });
-    const [sortBy, setSortBy] = useState('name'); // name, assigned, completion
-    const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
-    const [showProfile, setShowProfile] = useState(false);
+    const [sortBy, setSortBy] = useState('name');
+    const [sortOrder, setSortOrder] = useState('asc');
+    const [activeTab, setActiveTab] = useState('overview');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -64,6 +67,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                 style: { borderRadius: '10px', background: '#333', color: '#fff' },
             });
             fetchData();
+            setActiveTab('students'); // Switch to students view to see progress
         } catch (err) {
             toast.error('Failed to create LU.');
         }
@@ -93,7 +97,6 @@ const TeacherDashboard = ({ user, setUser }) => {
         .filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()))
         .sort((a, b) => {
             let valA, valB;
-
             if (sortBy === 'name') {
                 valA = a.name.toLowerCase();
                 valB = b.name.toLowerCase();
@@ -104,12 +107,10 @@ const TeacherDashboard = ({ user, setUser }) => {
                 const totalA = lus.filter(lu => lu.assignedTo.includes(a.id)).length;
                 const doneA = Object.values(a.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
                 valA = totalA > 0 ? (doneA / totalA) : 0;
-
                 const totalB = lus.filter(lu => lu.assignedTo.includes(b.id)).length;
                 const doneB = Object.values(b.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
                 valB = totalB > 0 ? (doneB / totalB) : 0;
             }
-
             if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
             if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
             return 0;
@@ -122,10 +123,6 @@ const TeacherDashboard = ({ user, setUser }) => {
             setSortBy(key);
             setSortOrder('asc');
         }
-        toast(`Sorted by ${key} (${sortOrder === 'asc' ? 'Descending' : 'Ascending'})`, {
-            icon: '↕️',
-            style: { borderRadius: '10px', background: '#333', color: '#fff' }
-        });
     };
 
     const getAggregateStats = () => {
@@ -149,249 +146,261 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const chartData = getAggregateStats();
 
-    if (showProfile) {
-        return <Profile user={user} setUser={setUser} onBack={() => setShowProfile(false)} />;
-    }
-
     return (
-        <div className="min-h-screen bg-[#121212] text-white p-6 md:p-10 font-sans">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <header className="flex justify-between items-center mb-10">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-red-600 p-2 rounded-xl">
-                            <Users size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold">Teacher Portal</h1>
-                            <p className="text-gray-400 text-sm">Welcome back, {user.name}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={() => setShowProfile(true)}
-                            className="flex items-center gap-2 hover:text-red-500 transition-colors text-sm font-medium"
-                        >
-                            <User size={18} /> Profile
-                        </button>
-                        <button onClick={handleLogout} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
-                            <LogOut size={18} /> Logout
-                        </button>
-                    </div>
-                </header>
+        <div className="flex min-h-screen bg-[#121212] text-white font-sans">
+            <Sidebar
+                role="teacher"
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                user={user}
+                handleLogout={handleLogout}
+            />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Progress Chart */}
-                    <div className="lg:col-span-3 bg-[#1E1E1E] p-8 rounded-3xl border border-white/5 shadow-xl flex flex-col md:flex-row items-center gap-8">
-                        <div className="w-full md:w-1/3">
-                            <h3 className="text-xl font-bold mb-2">Class Performance</h3>
-                            <p className="text-gray-400 text-sm mb-6">Aggregate view of student completion.</p>
-                            <div className="space-y-4">
-                                {chartData.map(item => (
-                                    <div key={item.name} className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                            <span className="text-sm text-gray-300">{item.name}</span>
-                                        </div>
-                                        <span className="font-bold">{item.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="w-full md:w-2/3 h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={chartData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                        {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: '#1E1E1E', border: 'none', borderRadius: '10px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+            <main className="flex-1 p-8 overflow-y-auto">
+                {/* Header with Search (Universal) */}
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 className="text-3xl font-black tracking-tight capitalize">
+                            {activeTab.replace(/([A-Z])/g, ' $1')}
+                        </h2>
+                        <p className="text-gray-500 text-sm">Managing Kalvium LUs for {students.length} students.</p>
                     </div>
-
-                    {/* Left: Search & Student List */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-[#1E1E1E] rounded-3xl border border-white/5 overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <h3 className="text-xl font-bold flex items-center gap-2 text-red-500">
-                                        <LayoutDashboard size={20} /> Student Progress
-                                    </h3>
-                                    <div className="flex gap-2 mt-2">
-                                        <button
-                                            onClick={() => toggleSort('name')}
-                                            className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${sortBy === 'name' ? 'bg-red-600 border-red-600' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
-                                        >
-                                            Name {sortBy === 'name' && <ArrowUpDown size={10} />}
-                                        </button>
-                                        <button
-                                            onClick={() => toggleSort('assigned')}
-                                            className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${sortBy === 'assigned' ? 'bg-red-600 border-red-600' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
-                                        >
-                                            Assigned {sortBy === 'assigned' && <ArrowUpDown size={10} />}
-                                        </button>
-                                        <button
-                                            onClick={() => toggleSort('completion')}
-                                            className={`text-[10px] uppercase font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${sortBy === 'completion' ? 'bg-red-600 border-red-600' : 'bg-transparent border-white/10 text-gray-400 hover:text-white'}`}
-                                        >
-                                            Progress {sortBy === 'completion' && <ArrowUpDown size={10} />}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="relative w-full md:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search students..."
-                                        className="w-full bg-[#121212] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:border-red-500 outline-none"
-                                        value={studentSearch}
-                                        onChange={(e) => setStudentSearch(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
-                                            <th className="px-6 py-4 font-bold">Student</th>
-                                            <th className="px-6 py-4 font-bold">LUs Assigned</th>
-                                            <th className="px-6 py-4 font-bold">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5">
-                                        {sortedStudents.map(s => {
-                                            const studentLUs = lus.filter(lu => lu.assignedTo.includes(s.id));
-                                            return (
-                                                <React.Fragment key={s.id}>
-                                                    <tr className="hover:bg-white/[0.02]">
-                                                        <td className="px-6 py-5">
-                                                            <p className="font-bold">{s.name}</p>
-                                                            <p className="text-xs text-gray-500">{s.email}</p>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            <span className="text-sm font-bold text-red-500">{studentLUs.length} Assigned</span>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            <button
-                                                                onClick={() => {
-                                                                    const row = document.getElementById(`details-${s.id}`);
-                                                                    row.classList.toggle('hidden');
-                                                                }}
-                                                                className="text-xs bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/5 transition-all"
-                                                            >
-                                                                View LUs
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                    <tr id={`details-${s.id}`} className="hidden bg-[#121212]/50">
-                                                        <td colSpan="3" className="px-6 py-4">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {studentLUs.map(lu => {
-                                                                    const prog = s.progress && s.progress[lu.id];
-                                                                    const status = (typeof prog === 'string' ? prog : prog?.status) || 'To Do';
-                                                                    return (
-                                                                        <div key={lu.id} className="bg-[#1E1E1E] p-4 rounded-xl border border-white/5 flex justify-between items-center">
-                                                                            <div>
-                                                                                <p className="font-bold text-sm">{lu.title}</p>
-                                                                                <p className={`text-[10px] font-bold uppercase ${status === 'Completed' ? 'text-green-500' :
-                                                                                    status === 'In Progress' ? 'text-yellow-400' : 'text-gray-500'
-                                                                                    }`}>{status}</p>
-                                                                            </div>
-                                                                            <button
-                                                                                onClick={() => setGradingTarget({ studentId: s.id, luId: lu.id, studentName: s.name, luTitle: lu.title })}
-                                                                                className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
-                                                                            >
-                                                                                <MessageSquare size={16} />
-                                                                            </button>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </React.Fragment>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right: Assign New LU */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-[#1E1E1E] p-8 rounded-3xl border border-white/5 shadow-xl sticky top-10">
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                <PlusCircle className="text-red-500" /> Assign New LU
-                            </h3>
-                            <form onSubmit={handleAddLu} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-2">LU Title</label>
-                                    <input type="text" className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none" value={newLu.title} onChange={(e) => setNewLu({ ...newLu, title: e.target.value })} required />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-2">Module</label>
-                                        <input type="text" className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none" value={newLu.module} onChange={(e) => setNewLu({ ...newLu, module: e.target.value })} />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-2">Due Date</label>
-                                        <input type="date" className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none text-sm" value={newLu.dueDate} onChange={(e) => setNewLu({ ...newLu, dueDate: e.target.value })} required />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-2">Assign to Students</label>
-                                    <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                        {students.map(s => (
-                                            <label key={s.id} className="flex items-center gap-3 p-3 bg-[#121212] rounded-xl border border-white/5 cursor-pointer hover:border-red-500/30">
-                                                <input type="checkbox" className="w-4 h-4 accent-red-600" checked={newLu.assignedTo.includes(s.id)} onChange={(e) => {
-                                                    const updated = e.target.checked ? [...newLu.assignedTo, s.id] : newLu.assignedTo.filter(id => id !== s.id);
-                                                    setNewLu({ ...newLu, assignedTo: updated });
-                                                }} />
-                                                <span className="text-sm">{s.name}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                                <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-900/10">Assign Now</button>
-                            </form>
+                    <div className="flex items-center gap-4">
+                        <div className="bg-[#1E1E1E] p-2 rounded-xl border border-white/5 text-gray-400 hover:text-red-500 cursor-pointer transition-all">
+                            <Bell size={20} />
                         </div>
                     </div>
                 </div>
-            </div>
+
+                {/* Dynamic Content Based on activeTab */}
+                {activeTab === 'overview' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-[#1E1E1E] p-10 rounded-[32px] border border-white/5 shadow-2xl flex flex-col lg:flex-row items-center gap-12">
+                            <div className="w-full lg:w-1/2">
+                                <h3 className="text-2xl font-bold mb-4">Class Performance Analysis</h3>
+                                <p className="text-gray-400 mb-8 leading-relaxed">
+                                    This chart shows the real-time completion status of all units assigned to your current batch.
+                                    Use this to identify if the module is too difficult or if students are falling behind.
+                                </p>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {chartData.map(item => (
+                                        <div key={item.name} className="bg-[#121212] p-4 rounded-2xl border border-white/5">
+                                            <div className="w-3 h-3 rounded-full mb-2" style={{ backgroundColor: item.color }}></div>
+                                            <p className="text-[10px] uppercase font-black text-gray-500 tracking-tighter">{item.name}</p>
+                                            <p className="text-xl font-bold">{item.value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 h-72">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={chartData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={8} dataKey="value" stroke="none">
+                                            {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ backgroundColor: '#1E1E1E', border: 'none', borderRadius: '16px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'students' && (
+                    <div className="bg-[#1E1E1E] rounded-[32px] border border-white/5 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-6">
+                            <div className="flex gap-2">
+                                {['name', 'assigned', 'completion'].map((key) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => toggleSort(key)}
+                                        className={`text-[10px] uppercase font-black px-4 py-2 rounded-full border transition-all flex items-center gap-2 ${sortBy === key ? 'bg-red-600 border-red-600 text-white' : 'bg-transparent border-white/10 text-gray-500 hover:text-white'}`}
+                                    >
+                                        {key} {sortBy === key && <ArrowUpDown size={10} />}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="relative w-full md:w-80">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search students..."
+                                    className="w-full bg-[#121212] border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm focus:border-red-500 outline-none transition-all"
+                                    value={studentSearch}
+                                    onChange={(e) => setStudentSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-white/5 text-gray-500 text-[10px] uppercase font-black tracking-widest">
+                                        <th className="px-8 py-5">Full Name</th>
+                                        <th className="px-8 py-5">Assigned LUs</th>
+                                        <th className="px-8 py-5">Completion</th>
+                                        <th className="px-8 py-5 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {sortedStudents.map(s => {
+                                        const studentLUs = lus.filter(lu => lu.assignedTo.includes(s.id));
+                                        const completedLUs = Object.values(s.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
+                                        const percent = studentLUs.length > 0 ? Math.round((completedLUs / studentLUs.length) * 100) : 0;
+                                        return (
+                                            <React.Fragment key={s.id}>
+                                                <tr className="hover:bg-white/[0.02] group transition-all">
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center text-red-600 font-bold border border-red-600/20">
+                                                                {s.name.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold">{s.name}</p>
+                                                                <p className="text-xs text-gray-500">{s.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <span className="text-sm font-black bg-white/5 px-3 py-1 rounded-lg border border-white/5">{studentLUs.length} Units</span>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-3 min-w-[120px]">
+                                                            <div className="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
+                                                                <div className="bg-red-600 h-full rounded-full transition-all" style={{ width: `${percent}%` }}></div>
+                                                            </div>
+                                                            <span className="text-xs font-black">{percent}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-right text-gray-400 group-hover:text-red-500">
+                                                        <button
+                                                            onClick={() => document.getElementById(`details-${s.id}`).classList.toggle('hidden')}
+                                                            className="p-2 hover:bg-white/5 rounded-xl transition-all"
+                                                        >
+                                                            <ClipboardList size={20} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr id={`details-${s.id}`} className="hidden bg-[#121212]/30">
+                                                    <td colSpan="4" className="px-8 py-6">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                            {studentLUs.map(lu => {
+                                                                const prog = s.progress && s.progress[lu.id];
+                                                                const status = (typeof prog === 'string' ? prog : prog?.status) || 'To Do';
+                                                                return (
+                                                                    <div key={lu.id} className="bg-[#1E1E1E] p-5 rounded-2xl border border-white/5 flex justify-between items-center group/item hover:border-red-500/30 transition-all">
+                                                                        <div className="min-w-0">
+                                                                            <p className="font-bold text-sm truncate">{lu.title}</p>
+                                                                            <div className="flex items-center gap-2 mt-1">
+                                                                                <div className={`w-1.5 h-1.5 rounded-full ${status === 'Completed' ? 'bg-green-500' : status === 'In Progress' ? 'bg-yellow-400' : 'bg-gray-600'}`}></div>
+                                                                                <p className="text-[10px] font-black uppercase tracking-tighter text-gray-500">{status}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => setGradingTarget({ studentId: s.id, luId: lu.id, studentName: s.name, luTitle: lu.title })}
+                                                                            className="p-2 bg-white/5 hover:bg-red-600 text-gray-400 hover:text-white rounded-xl transition-all shadow-lg"
+                                                                        >
+                                                                            <MessageSquare size={16} />
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'assign' && (
+                    <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-[#1E1E1E] p-10 rounded-[32px] border border-white/5 shadow-2xl">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 bg-red-600/10 text-red-600 rounded-2xl border border-red-600/20">
+                                    <PlusCircle size={24} />
+                                </div>
+                                <h3 className="text-2xl font-black italic uppercase italic">Deploy New Unit</h3>
+                            </div>
+                            <form onSubmit={handleAddLu} className="space-y-6">
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Core Title</label>
+                                    <input type="text" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold" placeholder="e.g. React State Hooks" value={newLu.title} onChange={(e) => setNewLu({ ...newLu, title: e.target.value })} required />
+                                </div>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Module ID</label>
+                                        <input type="text" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all" placeholder="MOD-01" value={newLu.module} onChange={(e) => setNewLu({ ...newLu, module: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Hard Deadline</label>
+                                        <input type="date" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all text-white" value={newLu.dueDate} onChange={(e) => setNewLu({ ...newLu, dueDate: e.target.value })} required />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Select Targets ({newLu.assignedTo.length})</label>
+                                    <div className="grid grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
+                                        {students.map(s => (
+                                            <button
+                                                key={s.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    const updated = newLu.assignedTo.includes(s.id)
+                                                        ? newLu.assignedTo.filter(id => id !== s.id)
+                                                        : [...newLu.assignedTo, s.id];
+                                                    setNewLu({ ...newLu, assignedTo: updated });
+                                                }}
+                                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${newLu.assignedTo.includes(s.id) ? 'bg-red-600 border-red-600 text-white shadow-lg' : 'bg-[#121212] border-white/10 text-gray-400 hover:border-red-600/30'}`}
+                                            >
+                                                <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center ${newLu.assignedTo.includes(s.id) ? 'bg-white border-white' : 'border-white/20'}`}>
+                                                    {newLu.assignedTo.includes(s.id) && <CheckCircle2 size={12} className="text-red-600" />}
+                                                </div>
+                                                <span className="text-xs font-bold truncate">{s.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-5 rounded-[24px] transition-all shadow-xl shadow-red-900/30 uppercase tracking-widest active:scale-95">Assign to Batch</button>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'profile' && (
+                    <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <Profile user={user} setUser={setUser} onBack={() => setActiveTab('overview')} />
+                    </div>
+                )}
+            </main>
 
             {/* Grading Modal */}
             {gradingTarget && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-[#1E1E1E] w-full max-w-md p-8 rounded-3xl border border-white/10 shadow-2xl relative">
-                        <button onClick={() => setGradingTarget(null)} className="absolute top-6 right-6 text-gray-500 hover:text-white">&times;</button>
-                        <h3 className="text-2xl font-bold mb-2">Give Feedback</h3>
-                        <p className="text-gray-400 mb-6 text-sm">Grading <span className="text-red-500 font-bold">{gradingTarget.luTitle}</span> for <span className="text-white font-bold">{gradingTarget.studentName}</span></p>
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+                    <div className="bg-[#1E1E1E] w-full max-w-lg p-10 rounded-[40px] border border-white/10 shadow-2xl relative">
+                        <button onClick={() => setGradingTarget(null)} className="absolute top-8 right-8 text-gray-500 hover:text-white text-3xl font-light">&times;</button>
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="p-3 bg-red-600 rounded-2xl text-white">
+                                <GraduationCap size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black italic">Assessor Feedback</h3>
+                                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Grading {gradingTarget.studentName}</p>
+                            </div>
+                        </div>
 
                         <form onSubmit={handleGradeSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm text-gray-400 mb-2">Grade / Score</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. A+, 95/100, Completed"
-                                    className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none"
-                                    value={feedbackData.grade}
-                                    onChange={(e) => setFeedbackData({ ...feedbackData, grade: e.target.value })}
-                                    required
-                                />
+                                <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Final Grade / Rating</label>
+                                <input type="text" placeholder="e.g. A+, Exceptional Performance" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold" value={feedbackData.grade} onChange={(e) => setFeedbackData({ ...feedbackData, grade: e.target.value })} required />
                             </div>
                             <div>
-                                <label className="block text-sm text-gray-400 mb-2">Comments (Optional)</label>
-                                <textarea
-                                    rows="4"
-                                    placeholder="Provide detailed feedback..."
-                                    className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none resize-none"
-                                    value={feedbackData.feedback}
-                                    onChange={(e) => setFeedbackData({ ...feedbackData, feedback: e.target.value })}
-                                ></textarea>
+                                <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Personalized Comments</label>
+                                <textarea rows="4" placeholder="Briefly summarize the student's strengths and areas for improvement..." className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all resize-none" value={feedbackData.feedback} onChange={(e) => setFeedbackData({ ...feedbackData, feedback: e.target.value })}></textarea>
                             </div>
-                            <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg ring-4 ring-red-600/10">Submit Feedback</button>
+                            <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-5 rounded-[24px] shadow-2xl ring-8 ring-red-600/5 transition-all">Publish Grade</button>
                         </form>
                     </div>
                 </div>
