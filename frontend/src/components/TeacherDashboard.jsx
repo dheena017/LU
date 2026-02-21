@@ -44,6 +44,7 @@ const TeacherDashboard = ({ user, setUser }) => {
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
     const [activeTab, setActiveTab] = useState('overview');
+    const [selectedBatch, setSelectedBatch] = useState('All Classes');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -99,7 +100,13 @@ const TeacherDashboard = ({ user, setUser }) => {
         navigate('/');
     };
 
-    const sortedStudents = [...students]
+    const batches = ['All Classes', ...new Set(students.map(s => s.batch).filter(Boolean))];
+
+    const filteredStudentsByBatch = selectedBatch === 'All Classes'
+        ? students
+        : students.filter(s => s.batch === selectedBatch);
+
+    const sortedStudents = [...filteredStudentsByBatch]
         .filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()))
         .sort((a, b) => {
             let valA, valB;
@@ -133,7 +140,7 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const getAggregateStats = () => {
         let completed = 0, inProgress = 0, todo = 0;
-        students.forEach(s => {
+        filteredStudentsByBatch.forEach(s => {
             const studentLUs = lus.filter(lu => lu.assignedTo.includes(s.id));
             studentLUs.forEach(lu => {
                 const prog = s.progress && s.progress[lu.id];
@@ -185,6 +192,15 @@ const TeacherDashboard = ({ user, setUser }) => {
                         <p className="text-gray-500 text-sm">Managing Kalvium LUs for {students.length} students.</p>
                     </div>
                     <div className="flex items-center gap-4">
+                        <select
+                            value={selectedBatch}
+                            onChange={(e) => setSelectedBatch(e.target.value)}
+                            className="bg-[#1E1E1E] border border-white/10 rounded-xl px-4 py-2 text-sm focus:border-red-500 outline-none cursor-pointer text-gray-300 font-bold"
+                        >
+                            {batches.map(batch => (
+                                <option key={batch} value={batch}>{batch}</option>
+                            ))}
+                        </select>
                         <div className="bg-[#1E1E1E] p-2 rounded-xl border border-white/5 text-gray-400 hover:text-red-500 cursor-pointer transition-all">
                             <Bell size={20} />
                         </div>
@@ -293,6 +309,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                 <thead>
                                     <tr className="bg-white/5 text-gray-500 text-[10px] uppercase font-black tracking-widest">
                                         <th className="px-8 py-5">Full Name</th>
+                                        <th className="px-8 py-5">Class (Batch)</th>
                                         <th className="px-8 py-5">Assigned LUs</th>
                                         <th className="px-8 py-5">Completion</th>
                                         <th className="px-8 py-5 text-right">Actions</th>
@@ -316,6 +333,11 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                                 <p className="text-xs text-gray-500">{s.email}</p>
                                                             </div>
                                                         </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-500/5 px-3 py-1 rounded-full border border-red-500/10">
+                                                            {s.batch || 'Unassigned'}
+                                                        </span>
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <span className="text-sm font-black bg-white/5 px-3 py-1 rounded-lg border border-white/5">{studentLUs.length} Units</span>
@@ -398,7 +420,25 @@ const TeacherDashboard = ({ user, setUser }) => {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Select Targets ({newLu.assignedTo.length})</label>
+                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3 flex justify-between items-center">
+                                        Select Targets ({newLu.assignedTo.length})
+                                        <div className="flex gap-2 text-[10px]">
+                                            {batches.map(b => (
+                                                <button
+                                                    key={b}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const batchStudents = b === 'All Classes' ? students : students.filter(s => s.batch === b);
+                                                        const batchIds = batchStudents.map(s => s.id);
+                                                        setNewLu({ ...newLu, assignedTo: [...new Set([...newLu.assignedTo, ...batchIds])] });
+                                                    }}
+                                                    className="px-2 py-1 bg-white/5 hover:bg-red-600 rounded-md transition-all"
+                                                >
+                                                    Add {b === 'All Classes' ? 'All' : b}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </label>
                                     <div className="grid grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
                                         {students.map(s => (
                                             <button

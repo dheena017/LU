@@ -89,6 +89,16 @@ const Login = ({ setUser }) => {
                     </button>
                 </form>
 
+                <p className="text-center text-sm text-gray-500 mt-6">
+                    Don't have an account?{' '}
+                    <button
+                        onClick={() => navigate('/register')}
+                        className="text-red-500 hover:underline font-bold"
+                    >
+                        Sign Up
+                    </button>
+                </p>
+
                 <div className="mt-8 pt-8 border-t border-white/5 grid grid-cols-2 gap-4 text-xs text-gray-500">
                     <div className="p-3 bg-white/5 rounded-xl">
                         <p className="font-bold text-gray-400 mb-1">Teacher Demo:</p>

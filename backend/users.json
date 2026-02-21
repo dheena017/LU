@@ -12,9 +12,11 @@
     "email": "student1@kalvium.com",
     "password": "pass",
     "role": "student",
+    "batch": "Web Dev 2024",
     "completedLUs": [],
     "progress": {
-      "1": "To Do"
+      "1": "In Progress",
+      "2": "Completed"
     }
   },
   {
@@ -23,6 +25,25 @@
     "email": "student2@kalvium.com",
     "password": "pass",
     "role": "student",
+    "batch": "AI/ML 2024",
+    "completedLUs": []
+  },
+  {
+    "id": "s3",
+    "name": "Sneha",
+    "email": "student3@kalvium.com",
+    "password": "pass",
+    "role": "student",
+    "batch": "Web Dev 2024",
+    "completedLUs": []
+  },
+  {
+    "id": "s4",
+    "name": "Vikram",
+    "email": "student4@kalvium.com",
+    "password": "pass",
+    "role": "student",
+    "batch": "AI/ML 2024",
     "completedLUs": []
   }
 ]
