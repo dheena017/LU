@@ -1,0 +1,43 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Login';
+import TeacherDashboard from './components/TeacherDashboard';
+import StudentDashboard from './components/StudentDashboard';
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) return <div className="min-h-screen bg-[#121212] flex items-center justify-center text-white">Loading...</div>;
+
+  return (
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={!user ? <Login setUser={setUser} /> : <Navigate to={user.role === 'teacher' ? '/teacher' : '/student'} />}
+        />
+
+        <Route
+          path="/teacher"
+          element={user?.role === 'teacher' ? <TeacherDashboard user={user} setUser={setUser} /> : <Navigate to="/" />}
+        />
+
+        <Route
+          path="/student"
+          element={user?.role === 'student' ? <StudentDashboard user={user} setUser={setUser} /> : <Navigate to="/" />}
+        />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
