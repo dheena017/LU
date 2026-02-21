@@ -23,7 +23,6 @@ app.post('/api/login', (req, res) => {
     const user = users.find(u => u.email === email && u.password === password);
 
     if (user) {
-        // Return user without password
         const { password, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
     } else {
@@ -37,17 +36,47 @@ app.get('/api/teacher/students', (req, res) => {
     res.json(users);
 });
 
-// Teacher: Create LU
+// Teacher: Create LU with Due Date
 app.post('/api/lus', (req, res) => {
     const lus = readJSON(LUS_FILE);
     const newLU = {
         id: Date.now(),
-        ...req.body,
+        title: req.body.title,
+        module: req.body.module,
+        dueDate: req.body.dueDate, // NEW
         assignedTo: req.body.assignedTo || []
     };
     lus.push(newLU);
     writeJSON(LUS_FILE, lus);
     res.status(201).json(newLU);
+});
+
+// Teacher: Provide Feedback/Grade
+app.put('/api/teacher/grade/:userId/:luId', (req, res) => {
+    const { userId, luId } = req.params;
+    const { feedback, grade } = req.body;
+
+    const users = readJSON(USERS_FILE);
+    const userIndex = users.findIndex(u => u.id === userId);
+
+    if (userIndex !== -1) {
+        if (!users[userIndex].progress) users[userIndex].progress = {};
+
+        // Ensure we preserve the existing status if only grading
+        const currentData = users[userIndex].progress[luId] || { status: 'To Do' };
+        const updatedData = typeof currentData === 'string' ? { status: currentData } : currentData;
+
+        users[userIndex].progress[luId] = {
+            ...updatedData,
+            feedback,
+            grade
+        };
+
+        writeJSON(USERS_FILE, users);
+        res.json({ success: true, progress: users[userIndex].progress[luId] });
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
 });
 
 // Student: Get my LUs
@@ -58,15 +87,17 @@ app.get('/api/student/:userId/lus', (req, res) => {
 
     const users = readJSON(USERS_FILE);
     const user = users.find(u => u.id === userId);
-
-    // Attach status from user's completed/in-progress list if you want more complexity,
-    // but for now let's just use the user's progress list in users.json
     const progress = user.progress || {};
 
-    const formattedLus = userLus.map(lu => ({
-        ...lu,
-        status: progress[lu.id] || 'To Do'
-    }));
+    const formattedLus = userLus.map(lu => {
+        const prog = progress[lu.id] || 'To Do';
+        return {
+            ...lu,
+            status: typeof prog === 'string' ? prog : prog.status,
+            feedback: prog.feedback || null,
+            grade: prog.grade || null
+        };
+    });
 
     res.json(formattedLus);
 });
@@ -81,7 +112,15 @@ app.put('/api/student/:userId/lus/:luId', (req, res) => {
 
     if (userIndex !== -1) {
         if (!users[userIndex].progress) users[userIndex].progress = {};
-        users[userIndex].progress[luId] = status;
+
+        const currentData = users[userIndex].progress[luId] || {};
+        const updatedData = typeof currentData === 'string' ? { status: currentData } : currentData;
+
+        users[userIndex].progress[luId] = {
+            ...updatedData,
+            status: status
+        };
+
         writeJSON(USERS_FILE, users);
         res.json({ success: true, status });
     } else {

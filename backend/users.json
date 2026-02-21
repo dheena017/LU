@@ -1,25 +1,28 @@
 [
-    {
-        "id": "t1",
-        "name": "Prof. Kalvium",
-        "email": "teacher@kalvium.com",
-        "password": "pass",
-        "role": "teacher"
-    },
-    {
-        "id": "s1",
-        "name": "Deena",
-        "email": "student1@kalvium.com",
-        "password": "pass",
-        "role": "student",
-        "completedLUs": []
-    },
-    {
-        "id": "s2",
-        "name": "Rahul",
-        "email": "student2@kalvium.com",
-        "password": "pass",
-        "role": "student",
-        "completedLUs": []
+  {
+    "id": "t1",
+    "name": "Prof. Kalvium",
+    "email": "teacher@kalvium.com",
+    "password": "pass",
+    "role": "teacher"
+  },
+  {
+    "id": "s1",
+    "name": "Deena",
+    "email": "student1@kalvium.com",
+    "password": "pass",
+    "role": "student",
+    "completedLUs": [],
+    "progress": {
+      "1": "To Do"
     }
+  },
+  {
+    "id": "s2",
+    "name": "Rahul",
+    "email": "student2@kalvium.com",
+    "password": "pass",
+    "role": "student",
+    "completedLUs": []
+  }
 ]
