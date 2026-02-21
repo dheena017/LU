@@ -18,6 +18,9 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import Profile from './Profile';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:5000');
 
 const StudentDashboard = ({ user, setUser }) => {
     const [lus, setLus] = useState([]);
@@ -26,6 +29,26 @@ const StudentDashboard = ({ user, setUser }) => {
 
     useEffect(() => {
         fetchMyLus();
+
+        // Real-time listener
+        socket.on('data_updated', (data) => {
+            fetchMyLus();
+            if (data.type === 'new_lu') {
+                toast(`New LU Assigned: ${data.title}`, {
+                    icon: '🎁',
+                    style: { borderRadius: '10px', background: '#333', color: '#fff' }
+                });
+            } else if (data.type === 'grade_updated' && data.userId === user.id) {
+                toast('Teacher provided feedback on your work!', {
+                    icon: '📝',
+                    style: { borderRadius: '10px', background: '#333', color: '#fff' }
+                });
+            }
+        });
+
+        return () => {
+            socket.off('data_updated');
+        };
     }, []);
 
     const fetchMyLus = async () => {

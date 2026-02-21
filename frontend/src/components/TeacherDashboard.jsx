@@ -33,6 +33,9 @@ import {
 } from 'recharts';
 import Sidebar from './Sidebar';
 import Profile from './Profile';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:5000');
 
 const TeacherDashboard = ({ user, setUser }) => {
     const [students, setStudents] = useState([]);
@@ -49,6 +52,21 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     useEffect(() => {
         fetchData();
+
+        // Listen for real-time updates
+        socket.on('data_updated', (data) => {
+            fetchData();
+            if (data.type === 'status_updated') {
+                toast('Student updated progress!', {
+                    icon: '🔔',
+                    style: { borderRadius: '10px', background: '#333', color: '#fff' }
+                });
+            }
+        });
+
+        return () => {
+            socket.off('data_updated');
+        };
     }, []);
 
     const fetchData = async () => {

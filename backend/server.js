@@ -4,7 +4,18 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PUT"]
+    }
+});
+
 const PORT = 5000;
 const LUS_FILE = path.join(__dirname, 'lus.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
@@ -15,6 +26,12 @@ app.use(bodyParser.json());
 // Helper functions
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
+
+// Socket connection
+io.on('connection', (socket) => {
+    console.log('A user connected for real-time updates');
+    socket.on('disconnect', () => console.log('User disconnected'));
+});
 
 // Auth Route
 app.post('/api/login', (req, res) => {
@@ -43,11 +60,15 @@ app.post('/api/lus', (req, res) => {
         id: Date.now(),
         title: req.body.title,
         module: req.body.module,
-        dueDate: req.body.dueDate, // NEW
+        dueDate: req.body.dueDate,
         assignedTo: req.body.assignedTo || []
     };
     lus.push(newLU);
     writeJSON(LUS_FILE, lus);
+
+    // Notify all clients of new LU
+    io.emit('data_updated', { type: 'new_lu', title: newLU.title });
+
     res.status(201).json(newLU);
 });
 
@@ -62,7 +83,6 @@ app.put('/api/teacher/grade/:userId/:luId', (req, res) => {
     if (userIndex !== -1) {
         if (!users[userIndex].progress) users[userIndex].progress = {};
 
-        // Ensure we preserve the existing status if only grading
         const currentData = users[userIndex].progress[luId] || { status: 'To Do' };
         const updatedData = typeof currentData === 'string' ? { status: currentData } : currentData;
 
@@ -73,6 +93,10 @@ app.put('/api/teacher/grade/:userId/:luId', (req, res) => {
         };
 
         writeJSON(USERS_FILE, users);
+
+        // Notify of grade update
+        io.emit('data_updated', { type: 'grade_updated', userId });
+
         res.json({ success: true, progress: users[userIndex].progress[luId] });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -122,6 +146,10 @@ app.put('/api/student/:userId/lus/:luId', (req, res) => {
         };
 
         writeJSON(USERS_FILE, users);
+
+        // Notify of status update
+        io.emit('data_updated', { type: 'status_updated', userId, status });
+
         res.json({ success: true, status });
     } else {
         res.status(404).json({ message: 'User not found' });
@@ -152,6 +180,10 @@ app.post('/api/register', (req, res) => {
 
     users.push(newUser);
     writeJSON(USERS_FILE, users);
+
+    // Notify of new registration
+    io.emit('data_updated', { type: 'registration' });
+
     res.status(201).json({ message: 'User created' });
 });
 
@@ -172,6 +204,10 @@ app.put('/api/profile/:userId', (req, res) => {
         };
 
         writeJSON(USERS_FILE, users);
+
+        // Notify of profile change
+        io.emit('data_updated', { type: 'profile_updated', userId });
+
         const { password, ...userWithoutPassword } = users[userIndex];
         res.json(userWithoutPassword);
     } else {
@@ -179,4 +215,4 @@ app.put('/api/profile/:userId', (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Backend running at http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Backend running at http://localhost:${PORT}`));
