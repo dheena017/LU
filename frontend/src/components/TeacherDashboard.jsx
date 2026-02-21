@@ -17,7 +17,8 @@ import {
     Bell,
     Tag,
     Square,
-    TrendingUp
+    TrendingUp,
+    Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -76,6 +77,7 @@ const TeacherDashboard = ({ user, setUser }) => {
     const [activeTab, setActiveTab] = useState('overview');
     const [selectedBatch, setSelectedBatch] = useState('All Classes');
     const [loading, setLoading] = useState(true);
+    const [deleteTarget, setDeleteTarget] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -139,6 +141,17 @@ const TeacherDashboard = ({ user, setUser }) => {
             fetchData();
         } catch (err) {
             toast.error('Failed to create LU.');
+        }
+    };
+
+    const handleDeleteLu = async (luId) => {
+        try {
+            await axios.delete(`http://localhost:5000/api/lus/${luId}`, getAuthHeader());
+            toast.success('Learning Unit deleted successfully');
+            setDeleteTarget(null);
+            fetchData();
+        } catch (err) {
+            toast.error('Failed to delete Learning Unit');
         }
     };
 
@@ -460,12 +473,20 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                                                 <p className="text-[10px] font-black uppercase tracking-tighter text-gray-500">{status}</p>
                                                                             </div>
                                                                         </div>
-                                                                        <button
-                                                                            onClick={() => setGradingTarget({ studentId: s.id, luId: lu.id, studentName: s.name, luTitle: lu.title })}
-                                                                            className="p-2 bg-white/5 hover:bg-red-600 text-gray-400 hover:text-white rounded-xl transition-all shadow-lg"
-                                                                        >
-                                                                            <MessageSquare size={16} />
-                                                                        </button>
+                                                                        <div className="flex gap-2">
+                                                                            <button
+                                                                                onClick={() => setGradingTarget({ studentId: s.id, luId: lu.id, studentName: s.name, luTitle: lu.title })}
+                                                                                className="p-2 bg-white/5 hover:bg-red-600 text-gray-400 hover:text-white rounded-xl transition-all shadow-lg"
+                                                                            >
+                                                                                <MessageSquare size={16} />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => setDeleteTarget(lu)}
+                                                                                className="p-2 bg-white/5 hover:bg-red-600/20 text-gray-500 hover:text-red-500 rounded-xl transition-all"
+                                                                            >
+                                                                                <Trash2 size={16} />
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 );
                                                             })}
@@ -620,6 +641,35 @@ const TeacherDashboard = ({ user, setUser }) => {
                             </div>
                             <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-5 rounded-[24px] shadow-2xl ring-8 ring-red-600/5 transition-all">Publish Grade</button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+                    <div className="bg-[#1E1E1E] w-full max-w-sm p-10 rounded-[40px] border border-white/10 shadow-2xl text-center">
+                        <div className="w-20 h-20 bg-red-600/10 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-600/20">
+                            <Trash2 size={40} />
+                        </div>
+                        <h3 className="text-2xl font-black italic mb-2">Delete LU?</h3>
+                        <p className="text-gray-500 text-sm mb-8">
+                            Are you sure you want to delete <span className="text-white font-bold">"{deleteTarget.title}"</span>? This action will remove it for all students and cannot be undone.
+                        </p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="flex-1 px-6 py-4 bg-white/5 hover:bg-white/10 rounded-2xl font-bold transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDeleteLu(deleteTarget.id)}
+                                className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-700 rounded-2xl font-bold shadow-xl shadow-red-900/30 transition-all active:scale-95"
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

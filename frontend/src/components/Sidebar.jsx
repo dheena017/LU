@@ -64,6 +64,14 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
                         </button>
                     );
                 })}
+
+                <div className="mt-8 px-4 py-3 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3">
+                    <div className="relative">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <div className="absolute inset-0 w-2 h-2 bg-emerald-500 rounded-full animate-ping opacity-40"></div>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500/80">System Active</span>
+                </div>
             </nav>
 
             {/* User Profile Summary & Logout */}
@@ -73,8 +81,13 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
                         <User size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{user?.name || 'User'}</p>
-                        <p className="text-[10px] text-gray-500 truncate uppercase tracking-widest">{user?.role || 'Guest'}</p>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                            <p className="text-sm font-bold truncate">{user?.name || 'User'}</p>
+                            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${role === 'teacher' ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                        </div>
+                        <p className="text-[9px] text-gray-500 truncate uppercase tracking-widest font-black">
+                            {role === 'teacher' ? 'Premium Educator' : 'Verified Learner'}
+                        </p>
                     </div>
                 </div>
 
