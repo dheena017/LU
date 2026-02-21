@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
     Users,
@@ -80,6 +80,36 @@ const TeacherDashboard = ({ user, setUser }) => {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const navigate = useNavigate();
 
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        setUser(null);
+        toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
+        navigate('/');
+    }, [navigate, setUser]);
+
+    const getAuthHeader = useCallback(() => ({
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }), []);
+
+    const fetchData = useCallback(async () => {
+        try {
+            const [studentsRes, lusRes] = await Promise.all([
+                axios.get('http://localhost:5000/api/teacher/students', getAuthHeader()),
+                axios.get('http://localhost:5000/api/lus', getAuthHeader())
+            ]);
+            setStudents(studentsRes.data || []);
+            setLus(lusRes.data || []);
+        } catch (err) {
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                handleLogout();
+            }
+            toast.error("Failed to load dashboard data");
+        } finally {
+            setLoading(false);
+        }
+    }, [getAuthHeader, handleLogout]);
+
     useEffect(() => {
         fetchData();
 
@@ -97,29 +127,7 @@ const TeacherDashboard = ({ user, setUser }) => {
         return () => {
             socket.off('data_updated');
         };
-    }, []);
-
-    const getAuthHeader = () => ({
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-
-    const fetchData = async () => {
-        try {
-            const [studentsRes, lusRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/teacher/students', getAuthHeader()),
-                axios.get('http://localhost:5000/api/lus', getAuthHeader())
-            ]);
-            setStudents(studentsRes.data || []);
-            setLus(lusRes.data || []);
-        } catch (err) {
-            if (err.response?.status === 401 || err.response?.status === 403) {
-                handleLogout();
-            }
-            toast.error("Failed to load dashboard data");
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [fetchData]);
 
     const handleAddLu = async (e) => {
         e.preventDefault();
@@ -139,7 +147,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                 style: { borderRadius: '10px', background: '#333', color: '#fff' },
             });
             fetchData();
-        } catch (err) {
+        } catch {
             toast.error('Failed to create LU.');
         }
     };
@@ -150,7 +158,7 @@ const TeacherDashboard = ({ user, setUser }) => {
             toast.success('Learning Unit deleted successfully');
             setDeleteTarget(null);
             fetchData();
-        } catch (err) {
+        } catch {
             toast.error('Failed to delete Learning Unit');
         }
     };
@@ -163,17 +171,9 @@ const TeacherDashboard = ({ user, setUser }) => {
             setGradingTarget(null);
             setFeedbackData({ feedback: '', grade: '' });
             fetchData();
-        } catch (err) {
+        } catch {
             toast.error("Failed to submit grade");
         }
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        setUser(null);
-        toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
-        navigate('/');
     };
 
     const batches = ['All Classes', ...new Set(((students || [])).map(s => s.batch).filter(Boolean))];
@@ -419,7 +419,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                     <td className="px-8 py-6">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center text-red-600 font-bold border border-red-600/20">
-                                                                {s.name.charAt(0)}
+                                                                {(s.name || 'U').charAt(0)}
                                                             </div>
                                                             <div>
                                                                 <p className="font-bold">{s.name}</p>

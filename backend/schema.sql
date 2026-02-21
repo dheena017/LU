@@ -46,5 +46,5 @@ CREATE TABLE IF NOT EXISTS user_activity (
 
 -- 5. Initial Seed Data (Optional)
 INSERT INTO users (id, name, email, password, role) 
-VALUES ('t1', 'Prof. Kalvium', 'teacher@kalvium.com', 'pass', 'teacher')
+VALUES ('t1', 'Prof. Kalvium', 'teacher@kalvium.com', '$2b$10$AnDlaD2bp8DZ8eqUhAYkvOjL3Q7Irg/pHRqumP2LoHgH6iorYyF9a', 'teacher')
 ON CONFLICT (id) DO NOTHING;

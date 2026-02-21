@@ -12,21 +12,46 @@ const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.error('Missing JWT_SECRET environment variable. Refusing to start.');
+    process.exit(1);
+}
+
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
 const io = new Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST", "PUT"]
+        origin: CORS_ORIGINS,
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
     }
 });
 
-const PORT = 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'kalvium-secret-key-2024';
+const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || CORS_ORIGINS.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+};
 
 // Security Middleware
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for local dev if needed
+app.use(helmet(process.env.NODE_ENV === 'production' ? {} : {
+    contentSecurityPolicy: false,
 }));
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Rate Limiting
@@ -72,38 +97,34 @@ app.post('/api/login', async (req, res) => {
         const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
-        if (user) {
-            // Check if password matches (handling both hashed and plain for migration if needed, 
-            // but ideally we should have migrated all)
-            let isMatch = false;
-            try {
-                // If it's a bcrypt hash, this will return true/false
-                isMatch = await bcrypt.compare(password, user.password);
-            } catch (e) {
-                // If the hash is invalid (e.g. plain text), it throws.
-                // We then fall back to direct comparison.
-                isMatch = false;
-            }
-
-            // If bcrypt failed OR returned false, check if it's a plain text match
-            if (!isMatch) {
-                isMatch = (password === user.password);
-            }
-
-            if (isMatch) {
-                const token = jwt.sign(
-                    { id: user.id, role: user.role, email: user.email },
-                    JWT_SECRET,
-                    { expiresIn: '24h' }
-                );
-                const { password, ...userWithoutPassword } = user;
-                res.json({ user: userWithoutPassword, token });
-            } else {
-                res.status(401).json({ message: 'Invalid credentials' });
-            }
-        } else {
+        if (!user) {
             res.status(401).json({ message: 'Invalid credentials' });
+            return;
         }
+
+        let storedPasswordHash = user.password;
+        if (!isBcryptHash(storedPasswordHash)) {
+            if (password !== user.password) {
+                res.status(401).json({ message: 'Invalid credentials' });
+                return;
+            }
+            storedPasswordHash = await bcrypt.hash(password, 10);
+            await db.query('UPDATE users SET password = $1 WHERE id = $2', [storedPasswordHash, user.id]);
+        }
+
+        const isMatch = await bcrypt.compare(password, storedPasswordHash);
+        if (!isMatch) {
+            res.status(401).json({ message: 'Invalid credentials' });
+            return;
+        }
+
+        const token = jwt.sign(
+            { id: user.id, role: user.role, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ user: userWithoutPassword, token });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Database error' });
@@ -257,7 +278,7 @@ app.put('/api/student/:userId/lus/:luId', authenticateToken, async (req, res) =>
     }
 });
 
-app.get('/api/lus', authenticateToken, async (req, res) => {
+app.get('/api/lus', authenticateToken, authorizeRole('teacher'), async (req, res) => {
     try {
         const lusRes = await db.query('SELECT id::TEXT as id, title, module, due_date AS "dueDate", status, tags FROM learning_units');
         const assignmentsRes = await db.query('SELECT lu_id::TEXT as lu_id, user_id FROM user_progress');
@@ -323,14 +344,19 @@ app.get('/api/profile/:userId', authenticateToken, async (req, res) => {
 
 // Registration
 app.post('/api/register', async (req, res) => {
-    const { name, email, password, role, batch } = req.body;
+    const { name, email, password, batch } = req.body;
     try {
+        if (!name || !email || !password || !batch) {
+            res.status(400).json({ message: 'Missing required registration fields' });
+            return;
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const id = `u${Date.now()}`;
         await db.query(
             'INSERT INTO users (id, name, email, password, role, batch) VALUES ($1, $2, $3, $4, $5, $6)',
-            [id, name, email, hashedPassword, role, role === 'student' ? (batch || 'Unassigned') : null]
+            [id, name, email, hashedPassword, 'student', batch || 'Unassigned']
         );
         io.emit('data_updated', { type: 'registration' });
         res.status(201).json({ message: 'User created' });

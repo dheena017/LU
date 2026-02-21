@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const db = require('./db');
 
 const readJSON = (file) => JSON.parse(fs.readFileSync(path.join(__dirname, file), 'utf8'));
+const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
 
 async function migrate() {
     console.log('📦 Starting SMART Migration (LUs first)...');
@@ -22,9 +24,12 @@ async function migrate() {
         console.log(`👤 Migrating ${users.length} users...`);
         for (const user of users) {
             console.log(` -> Processing: ${user.name}`);
+            const passwordToStore = isBcryptHash(user.password)
+                ? user.password
+                : await bcrypt.hash(String(user.password || ''), 10);
             await db.query(
                 'INSERT INTO users (id, name, email, password, role, batch, bio) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET password = $4',
-                [user.id, user.name, user.email, user.password, user.role, user.batch, user.bio]
+                [user.id, user.name, user.email, passwordToStore, user.role, user.batch, user.bio]
             );
 
             // Migrate progress

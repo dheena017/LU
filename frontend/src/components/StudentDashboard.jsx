@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
     CheckCircle2,
@@ -87,29 +87,23 @@ const StudentDashboard = ({ user, setUser }) => {
     const [userData, setUserData] = useState(user);
     const [activeTab, setActiveTab] = useState('dashboard');
     const [filterTag, setFilterTag] = useState('All');
-    const [serverStatus, setServerStatus] = useState('Checking...');
     const [error, setFetchError] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        axios.get('http://localhost:5000/api/lus')
-            .then(() => setServerStatus('Online'))
-            .catch(() => setServerStatus('Offline'));
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        setUser(null);
+        toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
+        navigate('/');
+    }, [navigate, setUser]);
 
-        const load = async () => {
-            await Promise.all([fetchMyLus(), fetchProfile()]);
-            // Buffer for animation
-            setTimeout(() => setLoading(false), 800);
-        };
-        load();
-    }, []);
-
-    const getAuthHeader = () => ({
+    const getAuthHeader = useCallback(() => ({
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
+    }), []);
 
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         if (!user?.id) return;
         try {
             const res = await axios.get(`http://localhost:5000/api/profile/${user.id}`, getAuthHeader());
@@ -120,9 +114,9 @@ const StudentDashboard = ({ user, setUser }) => {
             }
             console.error(err);
         }
-    };
+    }, [getAuthHeader, handleLogout, user]);
 
-    const fetchMyLus = async () => {
+    const fetchMyLus = useCallback(async () => {
         if (!user?.id) return;
         console.log(`[NETWORK] Fetching LUs for: ${user.id}`);
         setFetchError(null);
@@ -142,11 +136,18 @@ const StudentDashboard = ({ user, setUser }) => {
             setFetchError(err.message);
             toast.error("Network Error: Could not connect to server.");
         }
-    };
+    }, [getAuthHeader, handleLogout, user]);
 
     useEffect(() => {
-        fetchMyLus();
+        const load = async () => {
+            await Promise.all([fetchMyLus(), fetchProfile()]);
+            // Buffer for animation
+            setTimeout(() => setLoading(false), 800);
+        };
+        load();
+    }, [fetchMyLus, fetchProfile]);
 
+    useEffect(() => {
         const socketListener = (data) => {
             console.log('[SOCKET] Update received:', data.type);
             fetchMyLus();
@@ -162,11 +163,11 @@ const StudentDashboard = ({ user, setUser }) => {
 
         socket.on('data_updated', socketListener);
         return () => socket.off('data_updated', socketListener);
-    }, [user.id]);
+    }, [fetchMyLus, user?.id]);
 
     useEffect(() => {
-        if (activeTab === 'dashboard' || activeTab === 'curriculum' || activeTab === 'calendar') {
-            fetchMyLus();
+        if (activeTab !== 'dashboard' && activeTab !== 'curriculum' && activeTab !== 'calendar') {
+            return;
         }
     }, [activeTab]);
 
@@ -189,7 +190,7 @@ const StudentDashboard = ({ user, setUser }) => {
             }
 
             fetchMyLus();
-        } catch (err) {
+        } catch {
             toast.error("Failed to update status");
         }
     };
@@ -204,14 +205,6 @@ const StudentDashboard = ({ user, setUser }) => {
         currentStreak: streaks.current,
         bestStreak: streaks.best,
         totalInteractions: streaks.total
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        setUser(null);
-        toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
-        navigate('/');
     };
 
     if (loading) return <LoadingPage message="Synchronising Curriculum..." />;

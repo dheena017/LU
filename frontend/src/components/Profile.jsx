@@ -22,7 +22,7 @@ const Profile = ({ user, setUser, onBack }) => {
             setUser(res.data);
             localStorage.setItem('user', JSON.stringify(res.data));
             toast.success('Profile updated successfully!');
-        } catch (err) {
+        } catch {
             toast.error('Failed to update profile.');
         } finally {
             setLoading(false);
@@ -53,9 +53,9 @@ const Profile = ({ user, setUser, onBack }) => {
 
                     <div className="pt-16 p-8">
                         <div className="mb-8">
-                            <h2 className="text-3xl font-bold">{user.name}</h2>
+                            <h2 className="text-3xl font-bold">{user?.name}</h2>
                             <p className="text-gray-400 font-medium uppercase text-xs tracking-widest mt-1">
-                                {user.role === 'teacher' ? 'Premium Educator' : 'Learning Unit Student'}
+                                {user?.role === 'teacher' ? 'Premium Educator' : 'Learning Unit Student'}
                             </p>
                         </div>
 

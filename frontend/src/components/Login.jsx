@@ -30,7 +30,7 @@ const Login = ({ setUser }) => {
             } else {
                 navigate('/student');
             }
-        } catch (err) {
+        } catch {
             setError('Invalid email or password');
             toast.error('Login failed. Please check your details.', {
                 style: {

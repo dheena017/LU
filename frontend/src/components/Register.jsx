@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, GraduationCap, ArrowLeft, Users, User } from 'lucide-react';
+import { UserPlus, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Register = () => {
@@ -9,7 +9,6 @@ const Register = () => {
         name: '',
         email: '',
         password: '',
-        role: 'student',
         batch: ''
     });
     const [error, setError] = useState('');
@@ -89,32 +88,18 @@ const Register = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">I am a...</label>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">My Batch</label>
                         <select
-                            className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all appearance-none cursor-pointer"
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            required
+                            className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all"
+                            value={formData.batch}
+                            onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
                         >
-                            <option value="student">Student</option>
-                            <option value="teacher">Teacher</option>
+                            <option value="" disabled>Select a Batch</option>
+                            <option value="Web Dev 2024">Web Dev 2024</option>
+                            <option value="AI/ML 2024">AI/ML 2024</option>
                         </select>
                     </div>
-
-                    {formData.role === 'student' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Assign to Batch</label>
-                            <select
-                                required
-                                className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all"
-                                value={formData.batch}
-                                onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
-                            >
-                                <option value="" disabled>Select a Batch</option>
-                                <option value="Web Dev 2024">Web Dev 2024</option>
-                                <option value="AI/ML 2024">AI/ML 2024</option>
-                            </select>
-                        </div>
-                    )}
 
                     <button
                         type="submit"
