@@ -24,6 +24,12 @@ import {
     Cell,
     Tooltip,
     ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Legend
 } from 'recharts';
 import Sidebar from './Sidebar';
 import Profile from './Profile';
@@ -146,6 +152,19 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const chartData = getAggregateStats();
 
+    const barChartData = [
+        {
+            name: 'Completed',
+            students: chartData.find(d => d.name === 'Completed')?.value || 0,
+            fill: '#DC2626'
+        },
+        {
+            name: 'Pending',
+            students: (chartData.find(d => d.name === 'In Progress')?.value || 0) + (chartData.find(d => d.name === 'To Do')?.value || 0),
+            fill: '#4B5563'
+        }
+    ];
+
     return (
         <div className="flex min-h-screen bg-[#121212] text-white font-sans">
             <Sidebar
@@ -172,9 +191,9 @@ const TeacherDashboard = ({ user, setUser }) => {
                     </div>
                 </div>
 
-                {/* Dynamic Content Based on activeTab */}
                 {activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Summary Metrics & Pie Chart */}
                         <div className="bg-[#1E1E1E] p-10 rounded-[32px] border border-white/5 shadow-2xl flex flex-col lg:flex-row items-center gap-12">
                             <div className="w-full lg:w-1/2">
                                 <h3 className="text-2xl font-bold mb-4">Class Performance Analysis</h3>
@@ -200,6 +219,44 @@ const TeacherDashboard = ({ user, setUser }) => {
                                         </Pie>
                                         <Tooltip contentStyle={{ backgroundColor: '#1E1E1E', border: 'none', borderRadius: '16px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
                                     </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Bar Chart: Pending vs Completed */}
+                        <div className="bg-[#1E1E1E] p-10 rounded-[32px] border border-white/5 shadow-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <div>
+                                <h3 className="text-2xl font-bold mb-2">Class Stage Distribution</h3>
+                                <p className="text-gray-400 mb-2 text-sm text-gray-500">Comparison of completed tasks versus total pending workload across the entire class.</p>
+                            </div>
+                            <div className="w-full h-80">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={barChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
+                                        <XAxis
+                                            dataKey="name"
+                                            stroke="#666"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <YAxis
+                                            stroke="#666"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: 'rgba(255,255,255,0.05)', radius: 10 }}
+                                            contentStyle={{ backgroundColor: '#1E1E1E', border: 'none', borderRadius: '12px', color: '#fff' }}
+                                            itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                                        />
+                                        <Bar
+                                            dataKey="students"
+                                            radius={[10, 10, 0, 0]}
+                                            barSize={60}
+                                        />
+                                    </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
