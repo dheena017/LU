@@ -8,7 +8,8 @@ import {
     ClipboardList,
     TrendingUp,
     Settings,
-    ChevronRight
+    ChevronRight,
+    Calendar
 } from 'lucide-react';
 
 const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
