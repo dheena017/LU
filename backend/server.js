@@ -130,6 +130,31 @@ app.put('/api/student/:userId/lus/:luId', (req, res) => {
 
 app.get('/api/lus', (req, res) => res.json(readJSON(LUS_FILE)));
 
+// Registration
+app.post('/api/register', (req, res) => {
+    const { name, email, password, role, batch } = req.body;
+    const users = readJSON(USERS_FILE);
+
+    if (users.find(u => u.email === email)) {
+        return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    const newUser = {
+        id: `u${Date.now()}`,
+        name,
+        email,
+        password,
+        role,
+        batch: role === 'student' ? (batch || 'Unassigned') : undefined,
+        completedLUs: [],
+        progress: {}
+    };
+
+    users.push(newUser);
+    writeJSON(USERS_FILE, users);
+    res.status(201).json({ message: 'User created' });
+});
+
 // Update Profile
 app.put('/api/profile/:userId', (req, res) => {
     const { userId } = req.params;

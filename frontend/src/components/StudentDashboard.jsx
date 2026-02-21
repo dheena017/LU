@@ -96,11 +96,38 @@ const StudentDashboard = ({ user, setUser }) => {
                                 <h2 className="text-5xl font-black tracking-tighter">{stats.total}</h2>
                                 <p className="text-sm text-gray-400 mt-2">Assigned Units</p>
                             </div>
-                            <div className="bg-[#1E1E1E] p-8 rounded-[32px] border border-white/5 border-l-4 border-l-red-600 shadow-xl relative overflow-hidden group">
-                                <Award className="absolute -right-4 -bottom-4 text-white/5 w-32 h-32 group-hover:text-red-600/10 transition-colors" />
-                                <p className="text-red-500 text-[10px] uppercase font-black tracking-[0.2em] mb-3">Mastery Level</p>
-                                <h2 className="text-5xl font-black tracking-tighter">{stats.percentage}%</h2>
-                                <p className="text-sm text-gray-400 mt-2">Overall Progress</p>
+                            <div className="bg-[#1E1E1E] p-8 rounded-[32px] border border-white/5 shadow-xl relative overflow-hidden group flex items-center justify-between">
+                                <div className="z-10">
+                                    <p className="text-red-500 text-[10px] uppercase font-black tracking-[0.2em] mb-3">Mastery Level</p>
+                                    <h2 className="text-5xl font-black tracking-tighter">{stats.percentage}%</h2>
+                                    <p className="text-sm text-gray-400 mt-2">Overall Progress</p>
+                                </div>
+                                <div className="relative w-24 h-24">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="40"
+                                            stroke="currentColor"
+                                            strokeWidth="8"
+                                            fill="transparent"
+                                            className="text-white/5"
+                                        />
+                                        <circle
+                                            cx="48"
+                                            cy="48"
+                                            r="40"
+                                            stroke="currentColor"
+                                            strokeWidth="8"
+                                            fill="transparent"
+                                            strokeDasharray={251.2}
+                                            strokeDashoffset={251.2 - (251.2 * stats.percentage) / 100}
+                                            strokeLinecap="round"
+                                            className="text-red-600 transition-all duration-1000 ease-out"
+                                        />
+                                    </svg>
+                                    <Award className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/20" size={20} />
+                                </div>
                             </div>
                             <div className="bg-[#1E1E1E] p-8 rounded-[32px] border border-white/5 shadow-xl relative overflow-hidden group">
                                 <Clock className="absolute -right-4 -bottom-4 text-white/5 w-32 h-32 group-hover:text-yellow-600/10 transition-colors" />
@@ -111,20 +138,66 @@ const StudentDashboard = ({ user, setUser }) => {
                         </div>
 
                         {/* Recent Activity / Next Step */}
-                        <div className="bg-gradient-to-br from-red-600/10 to-[#1E1E1E] p-10 rounded-[40px] border border-red-600/10 flex flex-col md:flex-row items-center justify-between gap-8">
-                            <div>
-                                <h3 className="text-2xl font-black tracking-tight mb-2 italic uppercase">Next Milestone</h3>
-                                <p className="text-gray-400 max-w-md leading-relaxed">
-                                    Continue your streak! You have {stats.total - stats.completed} units remaining to complete this module.
-                                    Regular updates help your teacher track your growth.
-                                </p>
+                        {/* Activity Heatmap */}
+                        <div className="bg-[#1E1E1E] p-10 rounded-[40px] border border-white/5 shadow-2xl">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tight uppercase italic mb-1">Learning Consistency</h3>
+                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Activity heatmap for the last 15 weeks</p>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-tighter">
+                                    <span>Less</span>
+                                    <div className="flex gap-1">
+                                        <div className="w-3 h-3 bg-white/5 rounded-sm"></div>
+                                        <div className="w-3 h-3 bg-red-900/30 rounded-sm"></div>
+                                        <div className="w-3 h-3 bg-red-800/50 rounded-sm"></div>
+                                        <div className="w-3 h-3 bg-red-700/70 rounded-sm"></div>
+                                        <div className="w-3 h-3 bg-red-600 rounded-sm"></div>
+                                    </div>
+                                    <span>More</span>
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setActiveTab('curriculum')}
-                                className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-2xl shadow-red-900/40 flex items-center gap-3 transition-all active:scale-95"
-                            >
-                                Open Curriculum <ChevronRight size={18} />
-                            </button>
+                            <div className="flex gap-2 overflow-x-auto pb-4 custom-scrollbar">
+                                {[...Array(15)].map((_, weekIndex) => (
+                                    <div key={weekIndex} className="flex flex-col gap-2">
+                                        {[...Array(7)].map((_, dayIndex) => {
+                                            // Mock active days: more active in recent weeks
+                                            const isActive = Math.random() > (weekIndex < 10 ? 0.7 : 0.3);
+                                            const intensity = isActive ? (Math.floor(Math.random() * 4) + 1) : 0;
+                                            const colors = [
+                                                'bg-white/5',
+                                                'bg-red-900/30',
+                                                'bg-red-800/50',
+                                                'bg-red-700/70',
+                                                'bg-red-600'
+                                            ];
+                                            return (
+                                                <div
+                                                    key={dayIndex}
+                                                    className={`w-4 h-4 rounded-[4px] transition-all hover:scale-125 cursor-help ${colors[intensity]}`}
+                                                    title={`Activity Level: ${intensity}`}
+                                                ></div>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-6 flex items-center gap-6 border-t border-white/5 pt-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-2 bg-red-600/10 rounded-lg text-red-500"><TrendingUp size={16} /></div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Current Streak</p>
+                                        <p className="text-sm font-bold">12 Days</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 border-l border-white/5 pl-6">
+                                    <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500"><Award size={16} /></div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Best Streak</p>
+                                        <p className="text-sm font-bold">24 Days</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -149,7 +222,7 @@ const StudentDashboard = ({ user, setUser }) => {
                                         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
                                             <div className="flex items-center gap-6">
                                                 <div className={`p-5 rounded-[22px] transition-all duration-300 ${lu.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                                                        lu.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.1)]' : 'bg-[#121212] text-gray-700'
+                                                    lu.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.1)]' : 'bg-[#121212] text-gray-700'
                                                     }`}>
                                                     {lu.status === 'Completed' ? <CheckCircle2 size={28} /> :
                                                         lu.status === 'In Progress' ? <Clock size={28} /> : <Circle size={28} />}

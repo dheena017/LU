@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
+import Register from './components/Register';
 import TeacherDashboard from './components/TeacherDashboard';
 import StudentDashboard from './components/StudentDashboard';
 
@@ -27,6 +28,7 @@ function App() {
           path="/"
           element={!user ? <Login setUser={setUser} /> : <Navigate to={user.role === 'teacher' ? '/teacher' : '/student'} />}
         />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/teacher"
