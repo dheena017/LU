@@ -105,12 +105,19 @@ const StudentDashboard = ({ user, setUser }) => {
         load();
     }, []);
 
+    const getAuthHeader = () => ({
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+
     const fetchProfile = async () => {
         if (!user?.id) return;
         try {
-            const res = await axios.get(`http://localhost:5000/api/profile/${user.id}`);
+            const res = await axios.get(`http://localhost:5000/api/profile/${user.id}`, getAuthHeader());
             setUserData(res.data);
         } catch (err) {
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                handleLogout();
+            }
             console.error(err);
         }
     };
@@ -121,13 +128,16 @@ const StudentDashboard = ({ user, setUser }) => {
         setFetchError(null);
         try {
             const [lusRes, userRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/student/${user.id}/lus`),
-                axios.get(`http://localhost:5000/api/profile/${user.id}`)
+                axios.get(`http://localhost:5000/api/student/${user.id}/lus`, getAuthHeader()),
+                axios.get(`http://localhost:5000/api/profile/${user.id}`, getAuthHeader())
             ]);
             console.log(`[NETWORK] Received ${lusRes.data.length} LUs`);
             setLus(lusRes.data);
             setUserData(userRes.data);
         } catch (err) {
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                handleLogout();
+            }
             console.error(`[NETWORK] FAILED:`, err);
             setFetchError(err.message);
             toast.error("Network Error: Could not connect to server.");
@@ -162,7 +172,7 @@ const StudentDashboard = ({ user, setUser }) => {
 
     const updateStatus = async (luId, status) => {
         try {
-            await axios.put(`http://localhost:5000/api/student/${user.id}/lus/${luId}`, { status });
+            await axios.put(`http://localhost:5000/api/student/${user.id}/lus/${luId}`, { status }, getAuthHeader());
 
             if (status === 'Completed') {
                 confetti({
@@ -198,6 +208,7 @@ const StudentDashboard = ({ user, setUser }) => {
 
     const handleLogout = () => {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
         setUser(null);
         toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
         navigate('/');

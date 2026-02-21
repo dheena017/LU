@@ -14,16 +14,18 @@ const Login = ({ setUser }) => {
         e.preventDefault();
         try {
             const response = await axios.post('http://localhost:5000/api/login', { email, password });
-            setUser(response.data);
-            localStorage.setItem('user', JSON.stringify(response.data));
-            toast.success(`Welcome back, ${response.data.name}!`, {
+            const { user, token } = response.data;
+            setUser(user);
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', token);
+            toast.success(`Welcome back, ${user.name}!`, {
                 style: {
                     borderRadius: '10px',
                     background: '#333',
                     color: '#fff',
                 },
             });
-            if (response.data.role === 'teacher') {
+            if (user.role === 'teacher') {
                 navigate('/teacher');
             } else {
                 navigate('/student');

@@ -1,14 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const fs = require('fs');
 const path = require('path');
-
 const http = require('http');
 const { Server } = require('socket.io');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const db = require('./db');
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -19,9 +20,44 @@ const io = new Server(server, {
 });
 
 const PORT = 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'kalvium-secret-key-2024';
 
+// Security Middleware
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for local dev if needed
+}));
 app.use(cors());
 app.use(bodyParser.json());
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
+// Authentication Middleware
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ message: 'Access denied. Token missing.' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Invalid or expired token.' });
+        req.user = user;
+        next();
+    });
+};
+
+const authorizeRole = (role) => {
+    return (req, res, next) => {
+        if (req.user.role !== role) {
+            return res.status(403).json({ message: 'Forbidden: Insufficient permissions.' });
+        }
+        next();
+    };
+};
 
 // Socket connection
 io.on('connection', (socket) => {
@@ -33,22 +69,42 @@ io.on('connection', (socket) => {
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
-        const result = await db.query('SELECT * FROM users WHERE email = $1 AND password = $2', [email, password]);
+        const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
         if (user) {
-            const { password, ...userWithoutPassword } = user;
-            res.json(userWithoutPassword);
+            // Check if password matches (handling both hashed and plain for migration if needed, 
+            // but ideally we should have migrated all)
+            let isMatch = false;
+            try {
+                isMatch = await bcrypt.compare(password, user.password);
+            } catch (e) {
+                // Fallback for plain text if bcrypt fails (only during migration period)
+                isMatch = (password === user.password);
+            }
+
+            if (isMatch) {
+                const token = jwt.sign(
+                    { id: user.id, role: user.role, email: user.email },
+                    JWT_SECRET,
+                    { expiresIn: '24h' }
+                );
+                const { password, ...userWithoutPassword } = user;
+                res.json({ user: userWithoutPassword, token });
+            } else {
+                res.status(401).json({ message: 'Invalid credentials' });
+            }
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Database error' });
     }
 });
 
 // Teacher: Get all students and their progress
-app.get('/api/teacher/students', async (req, res) => {
+app.get('/api/teacher/students', authenticateToken, authorizeRole('teacher'), async (req, res) => {
     try {
         const studentsRes = await db.query('SELECT * FROM users WHERE role = $1', ['student']);
         const progressRes = await db.query('SELECT * FROM user_progress');
@@ -91,7 +147,7 @@ app.get('/api/teacher/students', async (req, res) => {
 });
 
 // Teacher: Create LU with Due Date
-app.post('/api/lus', async (req, res) => {
+app.post('/api/lus', authenticateToken, authorizeRole('teacher'), async (req, res) => {
     const { title, module, dueDate, assignedTo, status, tags } = req.body;
     const luId = Date.now();
     try {
@@ -120,16 +176,16 @@ app.post('/api/lus', async (req, res) => {
     }
 });
 
-// Teacher: Provide Feedback/Grade
-app.put('/api/teacher/grade/:userId/:luId', async (req, res) => {
-    const { userId, luId } = req.params;
+// Teacher: Grade an LU (Personalized Feedback)
+app.put('/api/teacher/grade/:studentId/:luId', authenticateToken, authorizeRole('teacher'), async (req, res) => {
+    const { studentId, luId } = req.params;
     const { feedback, grade } = req.body;
     try {
         await db.query(
             'UPDATE user_progress SET feedback = $1, grade = $2 WHERE user_id = $3 AND lu_id = $4',
-            [feedback, grade, userId, luId]
+            [feedback, grade, studentId, luId]
         );
-        io.emit('data_updated', { type: 'grade_updated', userId });
+        io.emit('data_updated', { type: 'grade_updated', userId: studentId });
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ message: 'Database error' });
@@ -137,8 +193,12 @@ app.put('/api/teacher/grade/:userId/:luId', async (req, res) => {
 });
 
 // Student: Get my LUs
-app.get('/api/student/:userId/lus', async (req, res) => {
+app.get('/api/student/:userId/lus', authenticateToken, async (req, res) => {
     const { userId } = req.params;
+    // Security check: Student can only access their own data
+    if (req.user.role === 'student' && req.user.id !== userId) {
+        return res.status(403).json({ message: 'Unauthorized access to student data' });
+    }
     try {
         const result = await db.query(`
             SELECT 
@@ -163,8 +223,11 @@ app.get('/api/student/:userId/lus', async (req, res) => {
 });
 
 // Student: Update status
-app.put('/api/student/:userId/lus/:luId', async (req, res) => {
+app.put('/api/student/:userId/lus/:luId', authenticateToken, async (req, res) => {
     const { userId, luId } = req.params;
+    if (req.user.role === 'student' && req.user.id !== userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+    }
     const { status } = req.body;
     try {
         await db.query(
@@ -187,7 +250,7 @@ app.put('/api/student/:userId/lus/:luId', async (req, res) => {
     }
 });
 
-app.get('/api/lus', async (req, res) => {
+app.get('/api/lus', authenticateToken, async (req, res) => {
     try {
         const lusRes = await db.query('SELECT id::TEXT as id, title, module, due_date AS "dueDate", status, tags FROM learning_units');
         const assignmentsRes = await db.query('SELECT lu_id::TEXT as lu_id, user_id FROM user_progress');
@@ -208,8 +271,11 @@ app.get('/api/lus', async (req, res) => {
 });
 
 // Profile retrieval
-app.get('/api/profile/:userId', async (req, res) => {
+app.get('/api/profile/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
+    if (req.user.role === 'student' && req.user.id !== userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+    }
     try {
         const userRes = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
         const actRes = await db.query('SELECT activity_date FROM user_activity WHERE user_id = $1', [userId]);
@@ -235,10 +301,12 @@ app.get('/api/profile/:userId', async (req, res) => {
 app.post('/api/register', async (req, res) => {
     const { name, email, password, role, batch } = req.body;
     try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
         const id = `u${Date.now()}`;
         await db.query(
             'INSERT INTO users (id, name, email, password, role, batch) VALUES ($1, $2, $3, $4, $5, $6)',
-            [id, name, email, password, role, role === 'student' ? (batch || 'Unassigned') : null]
+            [id, name, email, hashedPassword, role, role === 'student' ? (batch || 'Unassigned') : null]
         );
         io.emit('data_updated', { type: 'registration' });
         res.status(201).json({ message: 'User created' });
@@ -249,8 +317,11 @@ app.post('/api/register', async (req, res) => {
 });
 
 // Update Profile
-app.put('/api/profile/:userId', async (req, res) => {
+app.put('/api/profile/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
+    if (req.user.id !== userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+    }
     const { name, email, bio } = req.body;
     try {
         await db.query(

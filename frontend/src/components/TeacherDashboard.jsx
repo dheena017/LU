@@ -101,15 +101,22 @@ const TeacherDashboard = ({ user, setUser }) => {
         };
     }, []);
 
+    const getAuthHeader = () => ({
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+
     const fetchData = async () => {
         try {
             const [studentsRes, lusRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/teacher/students'),
-                axios.get('http://localhost:5000/api/lus')
+                axios.get('http://localhost:5000/api/teacher/students', getAuthHeader()),
+                axios.get('http://localhost:5000/api/lus', getAuthHeader())
             ]);
             setStudents(studentsRes.data);
             setLus(lusRes.data);
         } catch (err) {
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                handleLogout();
+            }
             toast.error("Failed to load dashboard data");
         }
     };
@@ -125,7 +132,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                 ...newLu,
                 tags: newLu.tags.split(',').map(tag => tag.trim().replace('#', '')).filter(tag => tag)
             };
-            await axios.post('http://localhost:5000/api/lus', payload);
+            await axios.post('http://localhost:5000/api/lus', payload, getAuthHeader());
             setNewLu({ title: '', module: '', dueDate: '', assignedTo: [], status: 'Published', tags: '' });
             toast.success(payload.status === 'Draft' ? 'Saved as Draft' : 'Learning Unit Published!', {
                 icon: '🚀',
@@ -140,7 +147,7 @@ const TeacherDashboard = ({ user, setUser }) => {
     const handleGradeSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:5000/api/teacher/grade/${gradingTarget.studentId}/${gradingTarget.luId}`, feedbackData);
+            await axios.put(`http://localhost:5000/api/teacher/grade/${gradingTarget.studentId}/${gradingTarget.luId}`, feedbackData, getAuthHeader());
             toast.success(`Feedback sent to ${gradingTarget.studentName}!`);
             setGradingTarget(null);
             setFeedbackData({ feedback: '', grade: '' });
@@ -152,6 +159,7 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const handleLogout = () => {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
         setUser(null);
         toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
         navigate('/');
