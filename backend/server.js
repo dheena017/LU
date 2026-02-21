@@ -277,6 +277,23 @@ app.get('/api/lus', authenticateToken, async (req, res) => {
     }
 });
 
+// Teacher: Delete Learning Unit
+app.delete('/api/lus/:id', authenticateToken, authorizeRole('teacher'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Delete assignments first (User Progress)
+        await db.query('DELETE FROM user_progress WHERE lu_id = $1', [id]);
+        // Delete LU itself
+        await db.query('DELETE FROM learning_units WHERE id = $1', [id]);
+
+        io.emit('data_updated', { type: 'lu_deleted', id });
+        res.json({ success: true, message: 'Learning Unit deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Database error' });
+    }
+});
+
 // Profile retrieval
 app.get('/api/profile/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
