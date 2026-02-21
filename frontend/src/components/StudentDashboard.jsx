@@ -382,6 +382,97 @@ const StudentDashboard = ({ user, setUser }) => {
                     </div>
                 )}
 
+                {activeTab === 'calendar' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-[#1E1E1E] rounded-[40px] border border-white/5 shadow-2xl overflow-hidden">
+                            <div className="p-10 border-b border-white/5 bg-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div>
+                                    <h3 className="text-3xl font-black italic uppercase tracking-tighter">Deadline Tracker</h3>
+                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-[0.2em] mt-2">Monthly View & Milestones</p>
+                                </div>
+                                <div className="flex items-center gap-4 bg-[#121212] p-2 rounded-2xl border border-white/5">
+                                    <div className="px-6 py-2 bg-red-600 rounded-xl text-white font-black text-sm shadow-lg shadow-red-900/20">
+                                        {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-10">
+                                <div className="grid grid-cols-7 gap-6 text-center mb-6">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className="text-[10px] font-black uppercase text-gray-500 tracking-[0.3em]">{day}</div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-2">
+                                    {(() => {
+                                        const now = new Date();
+                                        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+                                        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                                        const days = [];
+
+                                        for (let i = 0; i < firstDayOfMonth; i++) {
+                                            days.push(<div key={`empty-${i}`} className="aspect-square bg-white/[0.01] rounded-[24px]"></div>);
+                                        }
+
+                                        for (let d = 1; d <= daysInMonth; d++) {
+                                            const date = new Date(now.getFullYear(), now.getMonth(), d);
+                                            const dateStr = date.toISOString().split('T')[0];
+                                            const dayLus = lus.filter(lu => lu.dueDate && lu.dueDate.split('T')[0] === dateStr);
+                                            const isToday = d === now.getDate();
+
+                                            days.push(
+                                                <div key={d} className={`aspect-square p-4 rounded-[28px] border transition-all hover:border-red-600/50 group relative ${isToday ? 'bg-red-600 shadow-2xl shadow-red-900/40 border-transparent' : 'bg-[#121212] border-white/5'
+                                                    }`}>
+                                                    <span className={`text-xl font-black tracking-tighter ${isToday ? 'text-white' : 'text-gray-600'}`}>
+                                                        {d}
+                                                    </span>
+
+                                                    <div className="mt-2 flex flex-col gap-1">
+                                                        {dayLus.map(lu => (
+                                                            <div key={lu.id} className={`text-[8px] font-black uppercase px-2 py-1 rounded-lg truncate ${lu.status === 'Completed' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-100'
+                                                                }`}>
+                                                                {lu.title}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {dayLus.length > 0 && !isToday && (
+                                                        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"></div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+                                        return days;
+                                    })()}
+                                </div>
+                            </div>
+
+                            <div className="p-10 bg-white/[0.02] border-t border-white/5">
+                                <h4 className="text-[10px] font-black uppercase text-gray-500 tracking-[0.2em] mb-6 px-2">Next Targets</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {lus.filter(lu => lu.dueDate && new Date(lu.dueDate) >= new Date())
+                                        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                                        .slice(0, 3)
+                                        .map(lu => (
+                                            <div key={lu.id} className="bg-[#121212] p-6 rounded-[32px] border border-white/5 flex items-center justify-between group hover:border-red-600/30 transition-all">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-red-600/10 rounded-2xl text-red-500">
+                                                        <Calendar size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white font-black text-sm tracking-tight truncate max-w-[120px]">{lu.title}</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{new Date(lu.dueDate).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                                <ChevronRight className="text-white/10 group-hover:text-red-500 transition-colors" size={16} />
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === 'profile' && (
                     <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <Profile user={user} setUser={setUser} onBack={() => setActiveTab('dashboard')} />

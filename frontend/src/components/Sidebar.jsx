@@ -22,6 +22,7 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
     const studentLinks = [
         { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
         { id: 'curriculum', label: 'My Curriculum', icon: ClipboardList },
+        { id: 'calendar', label: 'LU Calendar', icon: Calendar },
         { id: 'profile', label: 'My Profile', icon: User },
     ];
 
@@ -50,8 +51,8 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
                             key={link.id}
                             onClick={() => setActiveTab(link.id)}
                             className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${isActive
-                                    ? 'bg-red-600 text-white shadow-lg shadow-red-900/20'
-                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                ? 'bg-red-600 text-white shadow-lg shadow-red-900/20'
+                                : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
