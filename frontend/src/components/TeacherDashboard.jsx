@@ -40,6 +40,29 @@ import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:5000');
 
+const calculateStreaks = (activityArray = []) => {
+    if (!activityArray || activityArray.length === 0) return { current: 0, best: 0, total: 0 };
+    const sortedDates = [...new Set(activityArray)].sort((a, b) => new Date(b) - new Date(a));
+    let currentStreak = 0;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const latestDateStr = sortedDates[0];
+    const isActive = latestDateStr === todayStr || latestDateStr === yesterdayStr;
+    if (isActive) {
+        currentStreak = 1;
+        for (let i = 0; i < sortedDates.length - 1; i++) {
+            const current = new Date(sortedDates[i]);
+            const next = new Date(sortedDates[i + 1]);
+            const diffDays = Math.round(Math.abs(current - next) / (1000 * 60 * 60 * 24));
+            if (diffDays === 1) currentStreak++;
+            else break;
+        }
+    }
+    return { current: currentStreak };
+};
+
 const TeacherDashboard = ({ user, setUser }) => {
     const [students, setStudents] = useState([]);
     const [lus, setLus] = useState([]);
@@ -349,7 +372,8 @@ const TeacherDashboard = ({ user, setUser }) => {
                                     <tr className="bg-white/5 text-gray-500 text-[10px] uppercase font-black tracking-widest">
                                         <th className="px-8 py-5">Full Name</th>
                                         <th className="px-8 py-5">Class (Batch)</th>
-                                        <th className="px-8 py-5">Assigned LUs</th>
+                                        <th className="px-8 py-5 text-center">Daily Streak</th>
+                                        <th className="px-8 py-5 text-center">Assigned LUs</th>
                                         <th className="px-8 py-5">Completion</th>
                                         <th className="px-8 py-5 text-right">Actions</th>
                                     </tr>
@@ -359,6 +383,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                         const studentLUs = (lus || []).filter(lu => (lu.assignedTo || []).includes(s.id));
                                         const completedLUs = Object.values(s.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
                                         const percent = studentLUs.length > 0 ? Math.round((completedLUs / studentLUs.length) * 100) : 0;
+                                        const streak = calculateStreaks(s.learningActivity).current;
                                         return (
                                             <React.Fragment key={s.id}>
                                                 <tr className="hover:bg-white/[0.02] group transition-all">
@@ -378,7 +403,13 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                             {s.batch || 'Unassigned'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-8 py-6">
+                                                    <td className="px-8 py-6 text-center">
+                                                        <div className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full border border-orange-500/20">
+                                                            <TrendingUp size={12} />
+                                                            <span className="text-xs font-black">{streak} Days</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-center">
                                                         <span className="text-sm font-black bg-white/5 px-3 py-1 rounded-lg border border-white/5">{studentLUs.length} Units</span>
                                                     </td>
                                                     <td className="px-8 py-6">

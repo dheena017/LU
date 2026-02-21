@@ -52,6 +52,7 @@ app.get('/api/teacher/students', async (req, res) => {
     try {
         const studentsRes = await db.query('SELECT * FROM users WHERE role = $1', ['student']);
         const progressRes = await db.query('SELECT * FROM user_progress');
+        const activityRes = await db.query('SELECT * FROM user_activity');
 
         const students = studentsRes.rows.map(student => {
             const studentProgress = {};
@@ -64,9 +65,21 @@ app.get('/api/teacher/students', async (req, res) => {
                         grade: p.grade
                     };
                 });
+
+            const learningActivity = activityRes.rows
+                .filter(a => a.user_id === student.id)
+                .map(a => {
+                    try {
+                        return new Date(a.activity_date).toISOString().split('T')[0];
+                    } catch (e) {
+                        return a.activity_date;
+                    }
+                });
+
             return {
                 ...student,
-                progress: studentProgress
+                progress: studentProgress,
+                learningActivity: learningActivity
             };
         });
 
