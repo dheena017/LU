@@ -6,7 +6,10 @@ import {
     Circle,
     LogOut,
     TrendingUp,
-    ListTodo
+    ListTodo,
+    Calendar,
+    MessageSquare,
+    Award
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -32,15 +35,10 @@ const StudentDashboard = ({ user, setUser }) => {
         try {
             await axios.put(`http://localhost:5000/api/student/${user.id}/lus/${luId}`, { status });
             toast.success(`Unit marked as ${status}`, {
-                style: {
-                    borderRadius: '10px',
-                    background: '#333',
-                    color: '#fff',
-                },
+                style: { borderRadius: '10px', background: '#333', color: '#fff' },
             });
             fetchMyLus();
         } catch (err) {
-            console.error(err);
             toast.error('Failed to update status.');
         }
     };
@@ -55,14 +53,7 @@ const StudentDashboard = ({ user, setUser }) => {
     const handleLogout = () => {
         localStorage.removeItem('user');
         setUser(null);
-        toast('Logged out safely.', {
-            icon: '👋',
-            style: {
-                borderRadius: '10px',
-                background: '#333',
-                color: '#fff',
-            },
-        });
+        toast('Logged out safely.', { icon: '👋', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
         navigate('/');
     };
 
@@ -80,78 +71,92 @@ const StudentDashboard = ({ user, setUser }) => {
                             <p className="text-gray-400 text-sm">Welcome back, {user.name}</p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all"
-                    >
-                        <LogOut size={18} />
-                        Logout
+                    <button onClick={handleLogout} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
+                        <LogOut size={18} /> Logout
                     </button>
                 </header>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div className="bg-[#1E1E1E] p-6 rounded-2xl border border-white/5">
+                    <div className="bg-[#1E1E1E] p-6 rounded-2xl border border-white/5 shadow-xl">
                         <p className="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Total Assigned</p>
                         <h2 className="text-4xl font-black">{stats.total}</h2>
                     </div>
-                    <div className="bg-[#1E1E1E] p-6 rounded-2xl border border-white/5 border-l-4 border-l-red-600">
+                    <div className="bg-[#1E1E1E] p-6 rounded-2xl border border-white/5 border-l-4 border-l-red-600 shadow-xl">
                         <p className="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Completion</p>
                         <h2 className="text-4xl font-black text-red-500">{stats.percentage}%</h2>
                     </div>
-                    <div className="bg-[#1E1E1E] p-6 rounded-2xl border border-white/5">
-                        <p className="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Learning Active</p>
+                    <div className="bg-[#1E1E1E] p-6 rounded-2xl border border-white/5 shadow-xl">
+                        <p className="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Active Units</p>
                         <h2 className="text-4xl font-black text-yellow-400">{stats.inProgress}</h2>
                     </div>
                 </div>
 
                 {/* LU List */}
-                <div className="bg-[#1E1E1E] rounded-3xl border border-white/5 overflow-hidden">
+                <div className="bg-[#1E1E1E] rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
                     <div className="p-6 bg-white/5 border-b border-white/5 flex items-center gap-3">
                         <ListTodo className="text-red-500" />
-                        <h3 className="font-bold text-lg">My Learning Units</h3>
+                        <h3 className="font-bold text-lg">My Curriculum</h3>
                     </div>
                     <div className="divide-y divide-white/5">
                         {lus.length === 0 ? (
-                            <div className="p-10 text-center text-gray-500">No LUs assigned yet.</div>
+                            <div className="p-20 text-center text-gray-500">No Learning Units assigned yet. Enjoy your break!</div>
                         ) : (
                             lus.map(lu => (
-                                <div key={lu.id} className="p-6 flex items-center justify-between group">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-2 rounded-lg ${lu.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                                            lu.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-white/5 text-gray-500'
-                                            }`}>
-                                            {lu.status === 'Completed' ? <CheckCircle2 size={24} /> :
-                                                lu.status === 'In Progress' ? <Clock size={24} /> : <Circle size={24} />}
+                                <div key={lu.id} className="p-6 hover:bg-white/[0.01] transition-all">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl ${lu.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
+                                                    lu.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-white/5 text-gray-500'
+                                                }`}>
+                                                {lu.status === 'Completed' ? <CheckCircle2 size={24} /> :
+                                                    lu.status === 'In Progress' ? <Clock size={24} /> : <Circle size={24} />}
+                                            </div>
+                                            <div>
+                                                <h4 className={`text-lg font-bold ${lu.status === 'Completed' ? 'text-gray-500 line-through' : 'text-white'}`}>
+                                                    {lu.title}
+                                                </h4>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-[10px] text-gray-500 uppercase tracking-widest font-black">{lu.module || 'Generic'}</span>
+                                                    {lu.dueDate && (
+                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-red-500/80 bg-red-500/5 px-2 py-0.5 rounded border border-red-500/10">
+                                                            <Calendar size={10} /> {new Date(lu.dueDate).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className={`font-bold ${lu.status === 'Completed' ? 'text-gray-500 line-through' : 'text-white'}`}>
-                                                {lu.title}
-                                            </h4>
-                                            <span className="text-[10px] text-gray-500 uppercase tracking-tighter font-black">{lu.module || 'Generic'}</span>
+
+                                        <div className="flex gap-2 w-full md:w-auto">
+                                            <button onClick={() => updateStatus(lu.id, 'To Do')} className={`flex-1 md:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all ${lu.status === 'To Do' ? 'bg-white/10 text-white shadow-inner' : 'text-gray-500 hover:text-white'}`}>Reset</button>
+                                            <button onClick={() => updateStatus(lu.id, 'In Progress')} className={`flex-1 md:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all ${lu.status === 'In Progress' ? 'bg-yellow-500 text-black shadow-lg' : 'text-yellow-500/60 hover:text-yellow-500'}`}>Study</button>
+                                            <button onClick={() => updateStatus(lu.id, 'Completed')} className={`flex-1 md:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all ${lu.status === 'Completed' ? 'bg-red-600 text-white shadow-lg' : 'text-green-500/60 hover:text-green-500'}`}>Finish</button>
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => updateStatus(lu.id, 'To Do')}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lu.status === 'To Do' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
-                                        >
-                                            Reset
-                                        </button>
-                                        <button
-                                            onClick={() => updateStatus(lu.id, 'In Progress')}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lu.status === 'In Progress' ? 'bg-yellow-500 text-black' : 'text-yellow-500/50 hover:text-yellow-500'}`}
-                                        >
-                                            Analyze
-                                        </button>
-                                        <button
-                                            onClick={() => updateStatus(lu.id, 'Completed')}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lu.status === 'Completed' ? 'bg-green-600 text-white' : 'text-green-500/50 hover:text-green-500'}`}
-                                        >
-                                            Finish
-                                        </button>
-                                    </div>
+                                    {/* Feedback & Grade Section (NEW) */}
+                                    {(lu.feedback || lu.grade) && (
+                                        <div className="mt-6 p-5 bg-[#121212] rounded-2xl border border-white/5 flex flex-col md:flex-row gap-6 relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                                <Award size={80} />
+                                            </div>
+                                            {lu.grade && (
+                                                <div className="flex flex-col items-center justify-center bg-red-600/10 border border-red-600/20 px-6 py-4 rounded-xl min-w-[100px]">
+                                                    <span className="text-[10px] uppercase font-black text-red-500 mb-1">Grade</span>
+                                                    <span className="text-2xl font-black text-white">{lu.grade}</span>
+                                                </div>
+                                            )}
+                                            {lu.feedback && (
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <MessageSquare size={14} className="text-red-500" />
+                                                        <span className="text-xs uppercase font-black text-gray-500 tracking-wider">Teacher Feedback</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-300 italic leading-relaxed">"{lu.feedback}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         )}
