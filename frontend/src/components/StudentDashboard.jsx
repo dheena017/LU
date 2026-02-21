@@ -13,7 +13,8 @@ import {
     User,
     Bell,
     ChevronRight,
-    PlusCircle
+    PlusCircle,
+    Filter
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -85,6 +86,7 @@ const StudentDashboard = ({ user, setUser }) => {
     const [lus, setLus] = useState([]);
     const [userData, setUserData] = useState(user);
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [filterTag, setFilterTag] = useState('All');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -308,20 +310,38 @@ const StudentDashboard = ({ user, setUser }) => {
 
                 {activeTab === 'curriculum' && (
                     <div className="bg-[#1E1E1E] rounded-[32px] border border-white/5 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-8 bg-white/5 border-b border-white/5 flex items-center gap-3">
-                            <ListTodo className="text-red-500" />
-                            <h3 className="font-black text-xl italic uppercase font-black">Learning Roadmap</h3>
+                        <div className="p-8 bg-white/5 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-center gap-3">
+                                <ListTodo className="text-red-500" />
+                                <h3 className="font-black text-xl italic uppercase font-black">Learning Roadmap</h3>
+                            </div>
+
+                            {/* Tag Filter */}
+                            <div className="flex items-center gap-3 bg-[#121212] p-1.5 rounded-2xl border border-white/5">
+                                <Filter size={14} className="ml-3 text-gray-500" />
+                                <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-[300px]">
+                                    {['All', ...new Set(lus.flatMap(lu => lu.tags || []))].map(tag => (
+                                        <button
+                                            key={tag}
+                                            onClick={() => setFilterTag(tag)}
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filterTag === tag ? 'bg-red-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                                        >
+                                            {tag}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                         <div className="divide-y divide-white/5">
-                            {lus.length === 0 ? (
+                            {lus.filter(lu => filterTag === 'All' || (lu.tags && lu.tags.includes(filterTag))).length === 0 ? (
                                 <div className="p-32 text-center">
                                     <div className="bg-[#121212] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
                                         <Award className="text-gray-600" size={32} />
                                     </div>
-                                    <p className="text-gray-500 font-bold">Your curriculum is clear! No units assigned.</p>
+                                    <p className="text-gray-500 font-bold">No units found matching this criteria.</p>
                                 </div>
                             ) : (
-                                lus.map(lu => (
+                                lus.filter(lu => filterTag === 'All' || (lu.tags && lu.tags.includes(filterTag))).map(lu => (
                                     <div key={lu.id} className="p-8 hover:bg-white/[0.01] transition-all group">
                                         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
                                             <div className="flex items-center gap-6">
@@ -337,6 +357,15 @@ const StudentDashboard = ({ user, setUser }) => {
                                                     </h4>
                                                     <div className="flex items-center gap-4 mt-2">
                                                         <span className="text-[10px] text-gray-600 uppercase font-black tracking-[0.2em]">{lu.module || 'General'}</span>
+                                                        {lu.tags && lu.tags.length > 0 && (
+                                                            <div className="flex gap-2">
+                                                                {lu.tags.map(tag => (
+                                                                    <span key={tag} className="text-[10px] font-bold text-red-500/60 bg-red-500/5 px-2 py-0.5 rounded border border-red-500/10 hover:border-red-500 transition-colors">
+                                                                        #{tag}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                         {lu.dueDate && (
                                                             <span className="flex items-center gap-2 text-[10px] font-black text-red-500/80 bg-red-500/5 px-3 py-1 rounded-full border border-red-500/10">
                                                                 <Calendar size={12} /> {new Date(lu.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}

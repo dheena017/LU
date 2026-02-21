@@ -61,13 +61,17 @@ app.post('/api/lus', (req, res) => {
         title: req.body.title,
         module: req.body.module,
         dueDate: req.body.dueDate,
-        assignedTo: req.body.assignedTo || []
+        assignedTo: req.body.assignedTo || [],
+        status: req.body.status || 'Published', // Draft or Published
+        tags: req.body.tags || []
     };
     lus.push(newLU);
     writeJSON(LUS_FILE, lus);
 
-    // Notify all clients of new LU
-    io.emit('data_updated', { type: 'new_lu', title: newLU.title });
+    // Only notify if published
+    if (newLU.status === 'Published') {
+        io.emit('data_updated', { type: 'new_lu', title: newLU.title });
+    }
 
     res.status(201).json(newLU);
 });
@@ -107,7 +111,7 @@ app.put('/api/teacher/grade/:userId/:luId', (req, res) => {
 app.get('/api/student/:userId/lus', (req, res) => {
     const { userId } = req.params;
     const lus = readJSON(LUS_FILE);
-    const userLus = lus.filter(lu => lu.assignedTo.includes(userId));
+    const userLus = lus.filter(lu => lu.assignedTo.includes(userId) && (lu.status === 'Published' || !lu.status));
 
     const users = readJSON(USERS_FILE);
     const user = users.find(u => u.id === userId);

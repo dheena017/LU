@@ -14,7 +14,9 @@ import {
     Calendar,
     ArrowUpDown,
     User,
-    Bell
+    Bell,
+    Tag,
+    Square
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -40,7 +42,7 @@ const socket = io('http://localhost:5000');
 const TeacherDashboard = ({ user, setUser }) => {
     const [students, setStudents] = useState([]);
     const [lus, setLus] = useState([]);
-    const [newLu, setNewLu] = useState({ title: '', module: '', dueDate: '', assignedTo: [] });
+    const [newLu, setNewLu] = useState({ title: '', module: '', dueDate: '', assignedTo: [], status: 'Published', tags: '' });
     const [studentSearch, setStudentSearch] = useState('');
     const [gradingTarget, setGradingTarget] = useState(null);
     const [feedbackData, setFeedbackData] = useState({ feedback: '', grade: '' });
@@ -85,14 +87,17 @@ const TeacherDashboard = ({ user, setUser }) => {
     const handleAddLu = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/lus', newLu);
-            setNewLu({ title: '', module: '', dueDate: '', assignedTo: [] });
-            toast.success('Learning Unit Assigned Successfully!', {
+            const payload = {
+                ...newLu,
+                tags: newLu.tags.split(',').map(tag => tag.trim().replace('#', '')).filter(tag => tag)
+            };
+            await axios.post('http://localhost:5000/api/lus', payload);
+            setNewLu({ title: '', module: '', dueDate: '', assignedTo: [], status: 'Published', tags: '' });
+            toast.success(payload.status === 'Draft' ? 'Saved as Draft' : 'Learning Unit Published!', {
                 icon: '🚀',
                 style: { borderRadius: '10px', background: '#333', color: '#fff' },
             });
             fetchData();
-            setActiveTab('students'); // Switch to students view to see progress
         } catch (err) {
             toast.error('Failed to create LU.');
         }
@@ -386,7 +391,17 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                                 return (
                                                                     <div key={lu.id} className="bg-[#1E1E1E] p-5 rounded-2xl border border-white/5 flex justify-between items-center group/item hover:border-red-500/30 transition-all">
                                                                         <div className="min-w-0">
-                                                                            <p className="font-bold text-sm truncate">{lu.title}</p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <p className="font-bold text-sm truncate">{lu.title}</p>
+                                                                                {lu.status === 'Draft' && (
+                                                                                    <span className="text-[8px] font-black bg-white/10 text-gray-400 px-1.5 py-0.5 rounded border border-white/10">DRAFT</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                                {lu.tags && lu.tags.map(t => (
+                                                                                    <span key={t} className="text-[8px] font-bold text-red-500/50">#{t}</span>
+                                                                                ))}
+                                                                            </div>
                                                                             <div className="flex items-center gap-2 mt-1">
                                                                                 <div className={`w-1.5 h-1.5 rounded-full ${status === 'Completed' ? 'bg-green-500' : status === 'In Progress' ? 'bg-yellow-400' : 'bg-gray-600'}`}></div>
                                                                                 <p className="text-[10px] font-black uppercase tracking-tighter text-gray-500">{status}</p>
@@ -438,9 +453,44 @@ const TeacherDashboard = ({ user, setUser }) => {
                                     </div>
                                 </div>
                                 <div>
+                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3 flex items-center gap-2">
+                                        <Tag size={12} className="text-red-500" /> Categories (Comma separated)
+                                    </label>
+                                    <input type="text" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all" placeholder="#React, #Frontend, #UI" value={newLu.tags} onChange={(e) => setNewLu({ ...newLu, tags: e.target.value })} />
+                                </div>
+                                <div className="p-1 bg-[#121212] rounded-2xl border border-white/10 flex">
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewLu({ ...newLu, status: 'Published' })}
+                                        className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${newLu.status === 'Published' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                                    >
+                                        Live Now
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewLu({ ...newLu, status: 'Draft' })}
+                                        className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${newLu.status === 'Draft' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                                    >
+                                        Save Draft
+                                    </button>
+                                </div>
+                                <div>
                                     <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3 flex justify-between items-center">
                                         Select Targets ({newLu.assignedTo.length})
                                         <div className="flex gap-2 text-[10px]">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (newLu.assignedTo.length === students.length) {
+                                                        setNewLu({ ...newLu, assignedTo: [] });
+                                                    } else {
+                                                        setNewLu({ ...newLu, assignedTo: students.map(s => s.id) });
+                                                    }
+                                                }}
+                                                className="px-3 py-1 bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white rounded-md transition-all border border-red-600/20"
+                                            >
+                                                {newLu.assignedTo.length === students.length ? 'Deselect All' : 'Select All'}
+                                            </button>
                                             {batches.map(b => (
                                                 <button
                                                     key={b}
