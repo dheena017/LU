@@ -5,7 +5,14 @@
     "module": "Frontend",
     "assignedTo": [
       "s1",
-      "s2"
+      "s2",
+      "s3",
+      "s4"
+    ],
+    "status": "Published",
+    "tags": [
+      "React",
+      "Core"
     ]
   },
   {
@@ -13,61 +20,47 @@
     "title": "Node.js Basics",
     "module": "Backend",
     "assignedTo": [
-      "s1"
-    ]
-  },
-  {
-    "id": 1771665297900,
-    "title": "efw",
-    "module": "wefw",
-    "assignedTo": [
-      "s2"
-    ]
-  },
-  {
-    "id": 1771665302977,
-    "title": "ewf",
-    "module": "wfe",
-    "assignedTo": []
-  },
-  {
-    "id": 1771673352736,
-    "title": "wer",
-    "module": "scds",
-    "dueDate": "2026-02-15",
-    "assignedTo": [
-      "s1"
+      "s1",
+      "s2",
+      "s3",
+      "s4"
+    ],
+    "status": "Published",
+    "tags": [
+      "NodeJS",
+      "Backend"
     ]
   },
   {
     "id": 1771673369564,
-    "title": "sc",
-    "module": "scd",
-    "dueDate": "2026-02-21",
+    "title": "Capstone Project",
+    "module": "Project",
+    "dueDate": "2026-02-28",
     "assignedTo": [
       "s1",
       "s2",
       "s3",
       "s4"
+    ],
+    "status": "Published",
+    "tags": [
+      "Fullstack"
     ]
   },
   {
-    "id": 1771673376529,
-    "title": "cs",
-    "module": "csds",
-    "dueDate": "2026-02-11",
-    "assignedTo": []
-  },
-  {
     "id": 1771673386723,
-    "title": "cs",
-    "module": "sc",
-    "dueDate": "2026-02-05",
+    "title": "Soft Skills Workshop",
+    "module": "Humanity",
+    "dueDate": "2026-03-05",
     "assignedTo": [
       "s1",
       "s2",
       "s3",
       "s4"
+    ],
+    "status": "Published",
+    "tags": [
+      "SoftSkills"
     ]
   }
 ]

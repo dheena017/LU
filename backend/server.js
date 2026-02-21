@@ -111,10 +111,11 @@ app.put('/api/teacher/grade/:userId/:luId', (req, res) => {
 app.get('/api/student/:userId/lus', (req, res) => {
     const { userId } = req.params;
     const lus = readJSON(LUS_FILE);
-    const userLus = lus.filter(lu => lu.assignedTo.includes(userId) && (lu.status === 'Published' || !lu.status));
+    const userLus = lus.filter(lu => lu.assignedTo.includes(userId));
 
     const users = readJSON(USERS_FILE);
     const user = users.find(u => u.id === userId);
+    if (!user) return res.json([]);
     const progress = user.progress || {};
 
     const formattedLus = userLus.map(lu => {

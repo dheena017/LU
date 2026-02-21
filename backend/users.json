@@ -31,7 +31,19 @@
     "role": "student",
     "batch": "AI/ML 2024",
     "completedLUs": [],
-    "learningActivity": []
+    "learningActivity": [],
+    "progress": {
+      "1771673369564": {
+        "status": "To Do",
+        "feedback": "eew",
+        "grade": "we"
+      },
+      "1771665297900": {
+        "status": "To Do",
+        "feedback": "ew",
+        "grade": "ewe"
+      }
+    }
   },
   {
     "id": "s3",

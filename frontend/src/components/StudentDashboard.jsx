@@ -14,7 +14,8 @@ import {
     Bell,
     ChevronRight,
     PlusCircle,
-    Filter
+    Filter,
+    Search
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -84,44 +85,60 @@ const StudentDashboard = ({ user, setUser }) => {
     const [userData, setUserData] = useState(user);
     const [activeTab, setActiveTab] = useState('dashboard');
     const [filterTag, setFilterTag] = useState('All');
+    const [serverStatus, setServerStatus] = useState('Checking...');
+    const [error, setFetchError] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        axios.get('http://localhost:5000/api/lus')
+            .then(() => setServerStatus('Online'))
+            .catch(() => setServerStatus('Offline'));
+    }, []);
+
+    const fetchMyLus = async () => {
+        if (!user?.id) return;
+        console.log(`[NETWORK] Fetching LUs for: ${user.id}`);
+        setFetchError(null);
+        try {
+            const [lusRes, userRes] = await Promise.all([
+                axios.get(`http://localhost:5000/api/student/${user.id}/lus`),
+                axios.get(`http://localhost:5000/api/profile/${user.id}`)
+            ]);
+            console.log(`[NETWORK] Received ${lusRes.data.length} LUs`);
+            setLus(lusRes.data);
+            setUserData(userRes.data);
+        } catch (err) {
+            console.error(`[NETWORK] FAILED:`, err);
+            setFetchError(err.message);
+            toast.error("Network Error: Could not connect to server.");
+        }
+    };
 
     useEffect(() => {
         fetchMyLus();
 
-        // Real-time listener
-        socket.on('data_updated', (data) => {
+        const socketListener = (data) => {
+            console.log('[SOCKET] Update received:', data.type);
             fetchMyLus();
             if (data.type === 'new_lu') {
-                toast(`New LU Assigned: ${data.title}`, {
-                    icon: '🎁',
-                    style: { borderRadius: '10px', background: '#333', color: '#fff' }
-                });
+                toast(`Assigned: ${data.title}`, { icon: '🎁', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
             } else if (data.type === 'grade_updated' && data.userId === user.id) {
                 toast('Teacher provided feedback on your work!', {
                     icon: '📝',
                     style: { borderRadius: '10px', background: '#333', color: '#fff' }
                 });
             }
-        });
-
-        return () => {
-            socket.off('data_updated');
         };
-    }, []);
 
-    const fetchMyLus = async () => {
-        try {
-            const [lusRes, userRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/student/${user.id}/lus`),
-                axios.get(`http://localhost:5000/api/profile/${user.id}`) // We can use the profile endpoint to get latest user data
-            ]);
-            setLus(lusRes.data);
-            setUserData(userRes.data);
-        } catch (err) {
-            console.error(err);
+        socket.on('data_updated', socketListener);
+        return () => socket.off('data_updated', socketListener);
+    }, [user.id]);
+
+    useEffect(() => {
+        if (activeTab === 'dashboard' || activeTab === 'curriculum' || activeTab === 'calendar') {
+            fetchMyLus();
         }
-    };
+    }, [activeTab]);
 
     const updateStatus = async (luId, status) => {
         try {
@@ -138,10 +155,10 @@ const StudentDashboard = ({ user, setUser }) => {
     const streaks = calculateStreaks(userData.learningActivity || []);
 
     const stats = {
-        total: lus.length,
-        completed: lus.filter(l => l.status === 'Completed').length,
-        inProgress: lus.filter(l => l.status === 'In Progress').length,
-        percentage: lus.length > 0 ? Math.round((lus.filter(l => l.status === 'Completed').length / lus.length) * 100) : 0,
+        total: Array.isArray(lus) ? lus.length : 0,
+        completed: Array.isArray(lus) ? lus.filter(l => l.status === 'Completed').length : 0,
+        inProgress: Array.isArray(lus) ? lus.filter(l => l.status === 'In Progress').length : 0,
+        percentage: Array.isArray(lus) && lus.length > 0 ? Math.round((lus.filter(l => l.status === 'Completed').length / lus.length) * 100) : 0,
         currentStreak: streaks.current,
         bestStreak: streaks.best,
         totalInteractions: streaks.total
@@ -172,8 +189,22 @@ const StudentDashboard = ({ user, setUser }) => {
                         </h2>
                         <p className="text-gray-500 text-sm">Learning Progress for {user.name}.</p>
                     </div>
-                    <div className="bg-[#1E1E1E] p-2 rounded-xl border border-white/5 text-gray-400 hover:text-red-500 cursor-pointer transition-all">
-                        <Bell size={20} />
+                    {error && (
+                        <div className="bg-red-600/10 border border-red-600/20 px-6 py-2 rounded-xl text-red-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            Connection Error: Data may be out of sync
+                        </div>
+                    )}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={fetchMyLus}
+                            className="bg-[#1E1E1E] p-2 rounded-xl border border-white/5 text-gray-400 hover:text-red-500 cursor-pointer transition-all flex items-center gap-2 px-6 group/sync"
+                        >
+                            <TrendingUp size={16} className="group-hover/sync:rotate-12 transition-transform" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Refresh Stats</span>
+                        </button>
+                        <div className="bg-[#1E1E1E] p-2 rounded-xl border border-white/5 text-gray-400 hover:text-red-500 cursor-pointer transition-all">
+                            <Bell size={20} />
+                        </div>
                     </div>
                 </div>
 
@@ -227,6 +258,22 @@ const StudentDashboard = ({ user, setUser }) => {
                                 <p className="text-sm text-gray-400 mt-2">Active Learning</p>
                             </div>
                         </div>
+
+                        {/* Quick Start Card */}
+                        {lus.filter(l => l.status !== 'Completed').length > 0 && (
+                            <div className="bg-red-600 p-10 rounded-[40px] shadow-2xl shadow-red-900/40 relative overflow-hidden group cursor-pointer" onClick={() => setActiveTab('curriculum')}>
+                                <div className="absolute top-0 right-0 p-10 opacity-20 transform translate-x-10 -translate-y-10 group-hover:translate-x-5 group-hover:-translate-y-5 transition-all">
+                                    <ChevronRight size={150} />
+                                </div>
+                                <div className="relative z-10">
+                                    <span className="bg-white/20 text-white text-[10px] font-black uppercase px-4 py-2 rounded-full mb-6 inline-block tracking-widest">Recommended Next Step</span>
+                                    <h3 className="text-4xl font-black italic uppercase tracking-tighter mb-4">
+                                        Continue: {lus.find(l => l.status !== 'Completed')?.title}
+                                    </h3>
+                                    <p className="text-red-100 font-bold opacity-80">You have {lus.filter(l => l.status !== 'Completed').length} units waiting for your attention. Click to resume.</p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Recent Activity / Next Step */}
                         {/* Activity Heatmap */}
@@ -330,12 +377,24 @@ const StudentDashboard = ({ user, setUser }) => {
                             </div>
                         </div>
                         <div className="divide-y divide-white/5">
-                            {lus.filter(lu => filterTag === 'All' || (lu.tags && lu.tags.includes(filterTag))).length === 0 ? (
+                            {!Array.isArray(lus) ? (
+                                <div className="p-32 text-center text-red-500 font-bold">
+                                    Error: Failed to load curriculum data.
+                                </div>
+                            ) : lus.length === 0 ? (
                                 <div className="p-32 text-center">
                                     <div className="bg-[#121212] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
                                         <Award className="text-gray-600" size={32} />
                                     </div>
-                                    <p className="text-gray-500 font-bold">No units found matching this criteria.</p>
+                                    <p className="text-gray-500 font-bold">No units assigned to your account yet (ID: {user.id}).</p>
+                                </div>
+                            ) : lus.filter(lu => filterTag === 'All' || (lu.tags && lu.tags.includes(filterTag))).length === 0 ? (
+                                <div className="p-32 text-center">
+                                    <div className="bg-[#121212] w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
+                                        <Search className="text-gray-600" size={32} />
+                                    </div>
+                                    <p className="text-gray-500 font-bold">No units found matching the active filters.</p>
+                                    <button onClick={() => setFilterTag('All')} className="mt-4 text-red-500 hover:underline text-xs font-black uppercase">Clear Filters</button>
                                 </div>
                             ) : (
                                 lus.filter(lu => filterTag === 'All' || (lu.tags && lu.tags.includes(filterTag))).map(lu => (

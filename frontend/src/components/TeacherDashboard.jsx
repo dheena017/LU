@@ -86,6 +86,10 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const handleAddLu = async (e) => {
         e.preventDefault();
+        if (newLu.assignedTo.length === 0) {
+            toast.error("Please select at least one student!");
+            return;
+        }
         try {
             const payload = {
                 ...newLu,
