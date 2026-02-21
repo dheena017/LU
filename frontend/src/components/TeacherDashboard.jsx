@@ -410,7 +410,10 @@ const TeacherDashboard = ({ user, setUser }) => {
                                 <tbody className="divide-y divide-white/5">
                                     {(sortedStudents || []).map(s => {
                                         const studentLUs = (lus || []).filter(lu => (lu.assignedTo || []).includes(s.id));
-                                        const completedLUs = Object.values(s.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
+                                        const completedLUs = Object.values(s?.progress || {}).filter(p => {
+                                            const status = typeof p === 'string' ? p : p?.status;
+                                            return status === 'Completed';
+                                        }).length;
                                         const percent = studentLUs.length > 0 ? Math.round((completedLUs / studentLUs.length) * 100) : 0;
                                         const streak = calculateStreaks(s.learningActivity).current;
                                         return (
@@ -616,6 +619,14 @@ const TeacherDashboard = ({ user, setUser }) => {
                 {activeTab === 'profile' && (
                     <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <Profile user={user} setUser={setUser} onBack={() => setActiveTab('overview')} />
+                    </div>
+                )}
+
+                {activeTab === 'test' && (
+                    <div className="p-20 bg-red-600 rounded-[40px] text-center">
+                        <h1 className="text-4xl font-black mb-4">SYSTEM DIAGNOSTIC</h1>
+                        <p className="text-xl font-bold">If you can see this red box, Tab Switching is WORKING.</p>
+                        <p className="mt-4 opacity-50">Current Tab: {activeTab}</p>
                     </div>
                 )}
             </main>

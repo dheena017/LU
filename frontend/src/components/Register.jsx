@@ -87,18 +87,31 @@ const Register = () => {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">My Batch</label>
-                        <select
-                            required
-                            className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all"
-                            value={formData.batch}
-                            onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
-                        >
-                            <option value="" disabled>Select a Batch</option>
-                            <option value="Web Dev 2024">Web Dev 2024</option>
-                            <option value="AI/ML 2024">AI/ML 2024</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">I am a...</label>
+                            <select
+                                className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all appearance-none cursor-pointer"
+                                value={formData.role}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            >
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">My Batch</label>
+                            <select
+                                required
+                                className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all"
+                                value={formData.batch}
+                                onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
+                            >
+                                <option value="" disabled>Select a Batch</option>
+                                <option value="Web Dev 2024">Web Dev 2024</option>
+                                <option value="AI/ML 2024">AI/ML 2024</option>
+                            </select>
+                        </div>
                     </div>
 
                     <button

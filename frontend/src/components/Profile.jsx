@@ -4,12 +4,15 @@ import { User, Mail, FileText, Save, ArrowLeft, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Profile = ({ user, setUser, onBack }) => {
+    console.log("[DEBUG] Profile rendering with user:", user);
     const [formData, setFormData] = useState({
-        name: user.name,
-        email: user.email,
-        bio: user.bio || ''
+        name: user?.name || '',
+        email: user?.email || '',
+        bio: user?.bio || ''
     });
     const [loading, setLoading] = useState(false);
+
+    if (!user) return <div className="p-20 text-center text-gray-500">Loading profile...</div>;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,94 +33,72 @@ const Profile = ({ user, setUser, onBack }) => {
     };
 
     return (
-        <div className="min-h-screen bg-[#121212] text-white p-6 md:p-10 font-sans">
-            <div className="max-w-2xl mx-auto">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
-                >
-                    <ArrowLeft size={20} /> Back to Dashboard
-                </button>
+        <div className="p-4 md:p-8 animate-in fade-in duration-500">
+            <button
+                onClick={onBack}
+                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8 font-bold"
+            >
+                <ArrowLeft size={20} /> Back to Dashboard
+            </button>
 
-                <div className="bg-[#1E1E1E] rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
-                    <div className="h-32 bg-red-600 relative">
-                        <div className="absolute -bottom-12 left-8 p-1 bg-[#1E1E1E] rounded-full">
-                            <div className="w-24 h-24 bg-[#121212] rounded-full flex items-center justify-center text-red-600 border-4 border-[#1E1E1E]">
-                                <User size={48} />
-                                <button className="absolute bottom-0 right-0 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow-lg">
-                                    <Camera size={16} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-16 p-8">
-                        <div className="mb-8">
-                            <h2 className="text-3xl font-bold">{user?.name}</h2>
-                            <p className="text-gray-400 font-medium uppercase text-xs tracking-widest mt-1">
-                                {user?.role === 'teacher' ? 'Premium Educator' : 'Learning Unit Student'}
-                            </p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
-                                        <User size={14} className="text-red-500" /> Full Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none transition-all"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
-                                        <Mail size={14} className="text-red-500" /> Email Address
-                                    </label>
-                                    <input
-                                        type="email"
-                                        className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none transition-all"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
-                                    <FileText size={14} className="text-red-500" /> Professional Bio
-                                </label>
-                                <textarea
-                                    rows="4"
-                                    className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 outline-none transition-all resize-none"
-                                    placeholder="Tell us about yourself..."
-                                    value={formData.bio}
-                                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                ></textarea>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Save size={20} />
-                                {loading ? 'Saving Changes...' : 'Save Profile Details'}
-                            </button>
-                        </form>
+            <div className="bg-[#1E1E1E] rounded-[32px] border border-white/5 overflow-hidden shadow-2xl">
+                <div className="h-24 bg-red-600/20 border-b border-white/5 flex items-end p-8">
+                    <div className="bg-red-600 p-3 rounded-2xl shadow-xl shadow-red-900/20 translate-y-12 border-4 border-[#1E1E1E]">
+                        <User size={32} className="text-white" />
                     </div>
                 </div>
 
-                <div className="mt-8 p-6 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <h4 className="font-bold text-gray-300">Account Security</h4>
-                        <p className="text-xs text-gray-500">Your password is currently secured with our system.</p>
+                <div className="p-10 pt-16">
+                    <div className="mb-10">
+                        <h2 className="text-3xl font-black tracking-tight">{user.name}</h2>
+                        <p className="text-red-500 text-[10px] uppercase font-black tracking-[0.2em] mt-1">
+                            {user.role === 'teacher' ? 'Premium Educator' : 'Verified Learner'}
+                        </p>
                     </div>
-                    <button className="text-xs font-bold text-red-500 hover:underline">Change Password</button>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-3">Full Name</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-3">Email Address</label>
+                                <input
+                                    type="email"
+                                    className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold opacity-50 cursor-not-allowed"
+                                    value={formData.email}
+                                    disabled
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-3">Personal Description (Bio)</label>
+                            <textarea
+                                rows="4"
+                                className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all resize-none font-medium text-gray-300"
+                                placeholder="Tell us about yourself..."
+                                value={formData.bio}
+                                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                            ></textarea>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-5 rounded-[24px] transition-all shadow-xl shadow-red-900/30 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
+                        >
+                            <Save size={20} />
+                            {loading ? 'Saving...' : 'Update Profile'}
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -39,18 +39,18 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={!user ? <Login setUser={setUser} /> : <Navigate to={user.role === 'teacher' ? '/teacher' : '/student'} />}
+          element={(!user || !user.role) ? <Login setUser={setUser} /> : <Navigate to={user.role === 'teacher' ? '/teacher' : '/student'} />}
         />
         <Route path="/register" element={<Register />} />
 
         <Route
           path="/teacher"
-          element={user?.role === 'teacher' ? <TeacherDashboard user={user} setUser={setUser} /> : <Navigate to="/" />}
+          element={(user?.role === 'teacher') ? <TeacherDashboard user={user} setUser={setUser} /> : <Navigate to="/" />}
         />
 
         <Route
           path="/student"
-          element={user?.role === 'student' ? <StudentDashboard user={user} setUser={setUser} /> : <Navigate to="/" />}
+          element={(user?.role === 'student') ? <StudentDashboard user={user} setUser={setUser} /> : <Navigate to="/" />}
         />
       </Routes>
     </Router>

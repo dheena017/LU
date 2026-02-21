@@ -344,9 +344,9 @@ app.get('/api/profile/:userId', authenticateToken, async (req, res) => {
 
 // Registration
 app.post('/api/register', async (req, res) => {
-    const { name, email, password, batch } = req.body;
     try {
-        if (!name || !email || !password || !batch) {
+        const { name, email, password, role, batch } = req.body;
+        if (!name || !email || !password) {
             res.status(400).json({ message: 'Missing required registration fields' });
             return;
         }
@@ -356,7 +356,7 @@ app.post('/api/register', async (req, res) => {
         const id = `u${Date.now()}`;
         await db.query(
             'INSERT INTO users (id, name, email, password, role, batch) VALUES ($1, $2, $3, $4, $5, $6)',
-            [id, name, email, hashedPassword, 'student', batch || 'Unassigned']
+            [id, name, email, hashedPassword, role || 'student', batch || 'Unassigned']
         );
         io.emit('data_updated', { type: 'registration' });
         res.status(201).json({ message: 'User created' });
@@ -378,8 +378,11 @@ app.put('/api/profile/:userId', authenticateToken, async (req, res) => {
             'UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), bio = COALESCE($3, bio) WHERE id = $4',
             [name, email, bio, userId]
         );
+        const updatedUserRes = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
+        const updatedUser = updatedUserRes.rows[0];
+        const { password, ...safeUser } = updatedUser;
         io.emit('data_updated', { type: 'profile_updated', userId });
-        res.json({ success: true });
+        res.json(safeUser);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Database error' });
