@@ -50,10 +50,15 @@ const TeacherDashboard = ({ user, setUser }) => {
     const [sortOrder, setSortOrder] = useState('asc');
     const [activeTab, setActiveTab] = useState('overview');
     const [selectedBatch, setSelectedBatch] = useState('All Classes');
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchData();
+        const load = async () => {
+            await fetchData();
+            setLoading(false);
+        };
+        load();
 
         // Listen for real-time updates
         socket.on('data_updated', (data) => {
@@ -127,27 +132,30 @@ const TeacherDashboard = ({ user, setUser }) => {
         navigate('/');
     };
 
-    const batches = ['All Classes', ...new Set(students.map(s => s.batch).filter(Boolean))];
+    const batches = ['All Classes', ...new Set(((students || [])).map(s => s.batch).filter(Boolean))];
 
     const filteredStudentsByBatch = selectedBatch === 'All Classes'
-        ? students
-        : students.filter(s => s.batch === selectedBatch);
+        ? (students || [])
+        : (students || []).filter(s => s.batch === selectedBatch);
 
     const sortedStudents = [...filteredStudentsByBatch]
-        .filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()))
+        .filter(s => (s.name || '').toLowerCase().includes(studentSearch.toLowerCase()))
         .sort((a, b) => {
             let valA, valB;
             if (sortBy === 'name') {
-                valA = a.name.toLowerCase();
-                valB = b.name.toLowerCase();
+                valA = (a.name || '').toLowerCase();
+                valB = (b.name || '').toLowerCase();
             } else if (sortBy === 'assigned') {
-                valA = lus.filter(lu => lu.assignedTo.includes(a.id)).length;
-                valB = lus.filter(lu => lu.assignedTo.includes(b.id)).length;
+                valA = (lus || []).filter(lu => (lu.assignedTo || []).includes(a.id)).length;
+                valB = (lus || []).filter(lu => (lu.assignedTo || []).includes(b.id)).length;
             } else if (sortBy === 'completion') {
-                const totalA = lus.filter(lu => lu.assignedTo.includes(a.id)).length;
+                const studentLusA = (lus || []).filter(lu => (lu.assignedTo || []).includes(a.id));
+                const totalA = studentLusA.length;
                 const doneA = Object.values(a.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
                 valA = totalA > 0 ? (doneA / totalA) : 0;
-                const totalB = lus.filter(lu => lu.assignedTo.includes(b.id)).length;
+
+                const studentLusB = (lus || []).filter(lu => (lu.assignedTo || []).includes(b.id));
+                const totalB = studentLusB.length;
                 const doneB = Object.values(b.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
                 valB = totalB > 0 ? (doneB / totalB) : 0;
             }
@@ -168,7 +176,7 @@ const TeacherDashboard = ({ user, setUser }) => {
     const getAggregateStats = () => {
         let completed = 0, inProgress = 0, todo = 0;
         filteredStudentsByBatch.forEach(s => {
-            const studentLUs = lus.filter(lu => lu.assignedTo.includes(s.id));
+            const studentLUs = (lus || []).filter(lu => (lu.assignedTo || []).includes(s.id));
             studentLUs.forEach(lu => {
                 const prog = s.progress && s.progress[lu.id];
                 const status = (typeof prog === 'string' ? prog : prog?.status) || 'To Do';
@@ -199,6 +207,17 @@ const TeacherDashboard = ({ user, setUser }) => {
         }
     ];
 
+    if (loading) {
+        return (
+            <div className="flex min-h-screen bg-[#121212] items-center justify-center text-white">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="font-bold text-gray-400">Loading Dashboard Data...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex min-h-screen bg-[#121212] text-white font-sans">
             <Sidebar
@@ -216,7 +235,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                         <h2 className="text-3xl font-black tracking-tight capitalize">
                             {activeTab.replace(/([A-Z])/g, ' $1')}
                         </h2>
-                        <p className="text-gray-500 text-sm">Managing Kalvium LUs for {students.length} students.</p>
+                        <p className="text-gray-500 text-sm">Managing Kalvium LUs for {(students || []).length} students.</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <select
@@ -224,7 +243,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                             onChange={(e) => setSelectedBatch(e.target.value)}
                             className="bg-[#1E1E1E] border border-white/10 rounded-xl px-4 py-2 text-sm focus:border-red-500 outline-none cursor-pointer text-gray-300 font-bold"
                         >
-                            {batches.map(batch => (
+                            {(batches || []).map(batch => (
                                 <option key={batch} value={batch}>{batch}</option>
                             ))}
                         </select>
@@ -245,7 +264,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                     Use this to identify if the module is too difficult or if students are falling behind.
                                 </p>
                                 <div className="grid grid-cols-3 gap-4">
-                                    {chartData.map(item => (
+                                    {(chartData || []).map(item => (
                                         <div key={item.name} className="bg-[#121212] p-4 rounded-2xl border border-white/5">
                                             <div className="w-3 h-3 rounded-full mb-2" style={{ backgroundColor: item.color }}></div>
                                             <p className="text-[10px] uppercase font-black text-gray-500 tracking-tighter">{item.name}</p>
@@ -258,7 +277,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={chartData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={8} dataKey="value" stroke="none">
-                                            {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                                            {(chartData || []).map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                                         </Pie>
                                         <Tooltip contentStyle={{ backgroundColor: '#1E1E1E', border: 'none', borderRadius: '16px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
                                     </PieChart>
@@ -343,8 +362,8 @@ const TeacherDashboard = ({ user, setUser }) => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {sortedStudents.map(s => {
-                                        const studentLUs = lus.filter(lu => lu.assignedTo.includes(s.id));
+                                    {(sortedStudents || []).map(s => {
+                                        const studentLUs = (lus || []).filter(lu => (lu.assignedTo || []).includes(s.id));
                                         const completedLUs = Object.values(s.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
                                         const percent = studentLUs.length > 0 ? Math.round((completedLUs / studentLUs.length) * 100) : 0;
                                         return (
@@ -389,7 +408,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                 <tr id={`details-${s.id}`} className="hidden bg-[#121212]/30">
                                                     <td colSpan="4" className="px-8 py-6">
                                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                            {studentLUs.map(lu => {
+                                                            {(studentLUs || []).map(lu => {
                                                                 const prog = s.progress && s.progress[lu.id];
                                                                 const status = (typeof prog === 'string' ? prog : prog?.status) || 'To Do';
                                                                 return (
@@ -402,7 +421,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                                                 )}
                                                                             </div>
                                                                             <div className="flex flex-wrap gap-1 mt-1">
-                                                                                {lu.tags && lu.tags.map(t => (
+                                                                                {(lu.tags || []).map(t => (
                                                                                     <span key={t} className="text-[8px] font-bold text-red-500/50">#{t}</span>
                                                                                 ))}
                                                                             </div>
@@ -488,7 +507,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                     if (newLu.assignedTo.length === students.length) {
                                                         setNewLu({ ...newLu, assignedTo: [] });
                                                     } else {
-                                                        setNewLu({ ...newLu, assignedTo: students.map(s => s.id) });
+                                                        setNewLu({ ...newLu, assignedTo: (students || []).map(s => s.id) });
                                                     }
                                                 }}
                                                 className="px-3 py-1 bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white rounded-md transition-all border border-red-600/20"
@@ -512,7 +531,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                         </div>
                                     </label>
                                     <div className="grid grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
-                                        {students.map(s => (
+                                        {(students || []).map(s => (
                                             <button
                                                 key={s.id}
                                                 type="button"

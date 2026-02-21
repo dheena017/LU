@@ -73,8 +73,8 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
                         <User size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{user.name}</p>
-                        <p className="text-[10px] text-gray-500 truncate uppercase tracking-widest">{user.role}</p>
+                        <p className="text-sm font-bold truncate">{user?.name || 'User'}</p>
+                        <p className="text-[10px] text-gray-500 truncate uppercase tracking-widest">{user?.role || 'Guest'}</p>
                     </div>
                 </div>
 
