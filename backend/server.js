@@ -20,7 +20,7 @@ if (!JWT_SECRET) {
     process.exit(1);
 }
 
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173')
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:4173')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
@@ -93,11 +93,13 @@ io.on('connection', (socket) => {
 // Auth Route
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
+    console.log(`[AUTH] Login attempt for: ${email}`);
     try {
         const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
         if (!user) {
+            console.log(`[AUTH] User not found: ${email}`);
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
@@ -114,6 +116,7 @@ app.post('/api/login', async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, storedPasswordHash);
         if (!isMatch) {
+            console.log(`[AUTH] Password mismatch for: ${email}`);
             res.status(401).json({ message: 'Invalid credentials' });
             return;
         }
@@ -124,6 +127,7 @@ app.post('/api/login', async (req, res) => {
             { expiresIn: '24h' }
         );
         const { password: _, ...userWithoutPassword } = user;
+        console.log(`[AUTH] Success for: ${email}`);
         res.json({ user: userWithoutPassword, token });
     } catch (err) {
         console.error(err);
