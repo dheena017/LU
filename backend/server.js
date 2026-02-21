@@ -163,6 +163,19 @@ app.put('/api/student/:userId/lus/:luId', (req, res) => {
 
 app.get('/api/lus', (req, res) => res.json(readJSON(LUS_FILE)));
 
+// Profile retrieval
+app.get('/api/profile/:userId', (req, res) => {
+    const { userId } = req.params;
+    const users = readJSON(USERS_FILE);
+    const user = users.find(u => u.id === userId);
+    if (user) {
+        const { password, ...safeUser } = user;
+        res.json(safeUser);
+    } else {
+        res.status(404).json({ message: 'User not found' });
+    }
+});
+
 // Registration
 app.post('/api/register', (req, res) => {
     const { name, email, password, role, batch } = req.body;

@@ -12,7 +12,8 @@ import {
     Award,
     User,
     Bell,
-    ChevronRight
+    ChevronRight,
+    PlusCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -77,7 +78,7 @@ const calculateStreaks = (activityArray = []) => {
         if (tempStreak > bestStreak) bestStreak = tempStreak;
     }
 
-    return { current: currentStreak, best: bestStreak };
+    return { current: currentStreak, best: bestStreak, total: activityArray.length };
 };
 
 const StudentDashboard = ({ user, setUser }) => {
@@ -143,7 +144,8 @@ const StudentDashboard = ({ user, setUser }) => {
         inProgress: lus.filter(l => l.status === 'In Progress').length,
         percentage: lus.length > 0 ? Math.round((lus.filter(l => l.status === 'Completed').length / lus.length) * 100) : 0,
         currentStreak: streaks.current,
-        bestStreak: streaks.best
+        bestStreak: streaks.best,
+        totalInteractions: streaks.total
     };
 
     const handleLogout = () => {
@@ -281,8 +283,15 @@ const StudentDashboard = ({ user, setUser }) => {
                                 <div className="flex items-center gap-2">
                                     <div className="p-2 bg-red-600/10 rounded-lg text-red-500"><TrendingUp size={16} /></div>
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Current Streak</p>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Daily Streak</p>
                                         <p className="text-sm font-bold">{stats.currentStreak} Days</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 border-l border-white/5 pl-6">
+                                    <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500"><PlusCircle size={16} /></div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">Learning Energy</p>
+                                        <p className="text-sm font-bold">{stats.totalInteractions} XP</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 border-l border-white/5 pl-6">
