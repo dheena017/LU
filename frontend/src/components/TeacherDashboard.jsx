@@ -16,7 +16,8 @@ import {
     User,
     Bell,
     Tag,
-    Square
+    Square,
+    TrendingUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -78,17 +79,12 @@ const TeacherDashboard = ({ user, setUser }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const load = async () => {
-            await fetchData();
-            // Just a bit of extra time to ensure smooth animation
-            setTimeout(() => setLoading(false), 500);
-        };
-        load();
+        fetchData();
 
         // Listen for real-time updates
         socket.on('data_updated', (data) => {
             fetchData();
-            if (data.type === 'status_updated') {
+            if (data?.type === 'status_updated') {
                 toast('Student updated progress!', {
                     icon: '🔔',
                     style: { borderRadius: '10px', background: '#333', color: '#fff' }
@@ -111,13 +107,15 @@ const TeacherDashboard = ({ user, setUser }) => {
                 axios.get('http://localhost:5000/api/teacher/students', getAuthHeader()),
                 axios.get('http://localhost:5000/api/lus', getAuthHeader())
             ]);
-            setStudents(studentsRes.data);
-            setLus(lusRes.data);
+            setStudents(studentsRes.data || []);
+            setLus(lusRes.data || []);
         } catch (err) {
             if (err.response?.status === 401 || err.response?.status === 403) {
                 handleLogout();
             }
             toast.error("Failed to load dashboard data");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -438,7 +436,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                                                     </td>
                                                 </tr>
                                                 <tr id={`details-${s.id}`} className="hidden bg-[#121212]/30">
-                                                    <td colSpan="4" className="px-8 py-6">
+                                                    <td colSpan="6" className="px-8 py-6">
                                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                             {(studentLUs || []).map(lu => {
                                                                 const prog = s.progress && s.progress[lu.id];

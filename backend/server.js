@@ -77,9 +77,16 @@ app.post('/api/login', async (req, res) => {
             // but ideally we should have migrated all)
             let isMatch = false;
             try {
+                // If it's a bcrypt hash, this will return true/false
                 isMatch = await bcrypt.compare(password, user.password);
             } catch (e) {
-                // Fallback for plain text if bcrypt fails (only during migration period)
+                // If the hash is invalid (e.g. plain text), it throws.
+                // We then fall back to direct comparison.
+                isMatch = false;
+            }
+
+            // If bcrypt failed OR returned false, check if it's a plain text match
+            if (!isMatch) {
                 isMatch = (password === user.password);
             }
 

@@ -15,7 +15,10 @@ const Profile = ({ user, setUser, onBack }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.put(`http://localhost:5000/api/profile/${user.id}`, formData);
+            const token = localStorage.getItem('token');
+            const res = await axios.put(`http://localhost:5000/api/profile/${user.id}`, formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setUser(res.data);
             localStorage.setItem('user', JSON.stringify(res.data));
             toast.success('Profile updated successfully!');

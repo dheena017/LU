@@ -12,12 +12,23 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    try {
+      const savedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      if (savedUser && token) {
+        setUser(JSON.parse(savedUser));
+      } else {
+        // If one is missing, clear both to be safe
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    } catch (e) {
+      console.error("Session restoration failed", e);
+      localStorage.clear();
+    } finally {
+      // Simulate a brief load for aesthetic finish
+      setTimeout(() => setLoading(false), 500);
     }
-    // Simulate a brief load for aesthetic finish
-    setTimeout(() => setLoading(false), 800);
   }, []);
 
   if (loading) return <LoadingPage />;
