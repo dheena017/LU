@@ -10,6 +10,7 @@ import {
     ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const TeacherDashboard = ({ user, setUser }) => {
     const [students, setStudents] = useState([]);
@@ -35,15 +36,32 @@ const TeacherDashboard = ({ user, setUser }) => {
         try {
             await axios.post('http://localhost:5000/api/lus', newLu);
             setNewLu({ title: '', module: '', assignedTo: [] });
+            toast.success('Learning Unit Assigned Successfully!', {
+                icon: '🚀',
+                style: {
+                    borderRadius: '10px',
+                    background: '#333',
+                    color: '#fff',
+                },
+            });
             fetchData();
         } catch (err) {
             console.error(err);
+            toast.error('Failed to create LU.');
         }
     };
 
     const handleLogout = () => {
         localStorage.removeItem('user');
         setUser(null);
+        toast('Logged out safely.', {
+            icon: '👋',
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+            },
+        });
         navigate('/');
     };
 

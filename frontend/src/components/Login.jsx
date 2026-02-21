@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, GraduationCap, Users } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Login = ({ setUser }) => {
     const [email, setEmail] = useState('');
@@ -15,6 +16,13 @@ const Login = ({ setUser }) => {
             const response = await axios.post('http://localhost:5000/api/login', { email, password });
             setUser(response.data);
             localStorage.setItem('user', JSON.stringify(response.data));
+            toast.success(`Welcome back, ${response.data.name}!`, {
+                style: {
+                    borderRadius: '10px',
+                    background: '#333',
+                    color: '#fff',
+                },
+            });
             if (response.data.role === 'teacher') {
                 navigate('/teacher');
             } else {
@@ -22,6 +30,13 @@ const Login = ({ setUser }) => {
             }
         } catch (err) {
             setError('Invalid email or password');
+            toast.error('Login failed. Please check your details.', {
+                style: {
+                    borderRadius: '10px',
+                    background: '#333',
+                    color: '#fff',
+                },
+            });
         }
     };
 

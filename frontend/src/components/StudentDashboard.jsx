@@ -9,6 +9,7 @@ import {
     ListTodo
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const StudentDashboard = ({ user, setUser }) => {
     const [lus, setLus] = useState([]);
@@ -30,9 +31,17 @@ const StudentDashboard = ({ user, setUser }) => {
     const updateStatus = async (luId, status) => {
         try {
             await axios.put(`http://localhost:5000/api/student/${user.id}/lus/${luId}`, { status });
+            toast.success(`Unit marked as ${status}`, {
+                style: {
+                    borderRadius: '10px',
+                    background: '#333',
+                    color: '#fff',
+                },
+            });
             fetchMyLus();
         } catch (err) {
             console.error(err);
+            toast.error('Failed to update status.');
         }
     };
 
@@ -46,6 +55,14 @@ const StudentDashboard = ({ user, setUser }) => {
     const handleLogout = () => {
         localStorage.removeItem('user');
         setUser(null);
+        toast('Logged out safely.', {
+            icon: '👋',
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+            },
+        });
         navigate('/');
     };
 
