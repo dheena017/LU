@@ -90,22 +90,14 @@ const Register = () => {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">I am a...</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setFormData({ ...formData, role: 'student' })}
-                                className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${formData.role === 'student' ? 'border-red-600 bg-red-600/10 text-white' : 'border-white/10 text-gray-500 hover:text-white'}`}
-                            >
-                                <User size={16} /> Student
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setFormData({ ...formData, role: 'teacher' })}
-                                className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${formData.role === 'teacher' ? 'border-red-600 bg-red-600/10 text-white' : 'border-white/10 text-gray-500 hover:text-white'}`}
-                            >
-                                <GraduationCap size={16} /> Teacher
-                            </button>
-                        </div>
+                        <select
+                            className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all appearance-none cursor-pointer"
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                        >
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                        </select>
                     </div>
 
                     {formData.role === 'student' && (

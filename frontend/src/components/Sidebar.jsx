@@ -76,26 +76,32 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
 
             {/* User Profile Summary & Logout */}
             <div className="p-4 border-t border-white/5 bg-white/[0.02]">
-                <div className="flex items-center gap-3 px-2 mb-4">
-                    <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center text-red-600 border border-red-600/20">
+                <button
+                    onClick={() => setActiveTab('profile')}
+                    className="w-full flex items-center gap-3 px-2 mb-4 hover:bg-white/5 p-2 rounded-2xl transition-all group text-left border border-white/0 hover:border-white/5 shadow-xl hover:shadow-red-900/10"
+                >
+                    <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center text-red-600 border border-red-600/20 group-hover:bg-red-600 group-hover:text-white transition-all duration-300">
                         <User size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                            <p className="text-sm font-bold truncate">{user?.name || 'User'}</p>
+                            <p className="text-sm font-bold truncate group-hover:text-white transition-colors">{user?.name || 'User'}</p>
                             <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${role === 'teacher' ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
                         </div>
-                        <p className="text-[9px] text-gray-500 truncate uppercase tracking-widest font-black">
+                        <p className="text-[9px] text-gray-500 truncate uppercase tracking-widest font-black opacity-60 group-hover:opacity-100 transition-opacity">
                             {role === 'teacher' ? 'Premium Educator' : 'Verified Learner'}
                         </p>
                     </div>
-                </div>
+                    <ChevronRight size={14} className="text-white/5 group-hover:text-white/40 transition-all -translate-x-2 group-hover:translate-x-0" />
+                </button>
 
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-2xl transition-all font-bold text-sm"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-2xl transition-all font-bold text-sm group"
                 >
-                    <LogOut size={18} />
+                    <div className="p-2 bg-white/5 rounded-lg group-hover:bg-red-500/10 transition-all">
+                        <LogOut size={18} />
+                    </div>
                     Logout
                 </button>
             </div>

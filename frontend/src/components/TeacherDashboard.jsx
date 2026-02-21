@@ -195,12 +195,12 @@ const TeacherDashboard = ({ user, setUser }) => {
             } else if (sortBy === 'completion') {
                 const studentLusA = (lus || []).filter(lu => (lu.assignedTo || []).includes(a.id));
                 const totalA = studentLusA.length;
-                const doneA = Object.values(a.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
+                const doneA = Object.values(a.progress || {}).filter(p => (typeof p === 'string' ? p : p?.status) === 'Completed').length;
                 valA = totalA > 0 ? (doneA / totalA) : 0;
 
                 const studentLusB = (lus || []).filter(lu => (lu.assignedTo || []).includes(b.id));
                 const totalB = studentLusB.length;
-                const doneB = Object.values(b.progress || {}).filter(p => (typeof p === 'string' ? p : p.status) === 'Completed').length;
+                const doneB = Object.values(b.progress || {}).filter(p => (typeof p === 'string' ? p : p?.status) === 'Completed').length;
                 valB = totalB > 0 ? (doneB / totalB) : 0;
             }
             if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
@@ -363,16 +363,26 @@ const TeacherDashboard = ({ user, setUser }) => {
                 {activeTab === 'students' && (
                     <div className="bg-[#1E1E1E] rounded-[32px] border border-white/5 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/5 gap-6">
-                            <div className="flex gap-2">
-                                {['name', 'assigned', 'completion'].map((key) => (
-                                    <button
-                                        key={key}
-                                        onClick={() => toggleSort(key)}
-                                        className={`text-[10px] uppercase font-black px-4 py-2 rounded-full border transition-all flex items-center gap-2 ${sortBy === key ? 'bg-red-600 border-red-600 text-white' : 'bg-transparent border-white/10 text-gray-500 hover:text-white'}`}
+                            <div className="flex items-center gap-3 bg-[#121212] p-1.5 rounded-2xl border border-white/5 pr-4">
+                                <ArrowUpDown size={14} className="ml-3 text-gray-500" />
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Sort By:</span>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => toggleSort(e.target.value)}
+                                        className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-white outline-none cursor-pointer hover:text-red-500 transition-colors py-1"
                                     >
-                                        {key} {sortBy === key && <ArrowUpDown size={10} />}
-                                    </button>
-                                ))}
+                                        <option value="name" className="bg-[#1E1E1E]">Name</option>
+                                        <option value="assigned" className="bg-[#1E1E1E]">Assigned</option>
+                                        <option value="completion" className="bg-[#1E1E1E]">Completion</option>
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                    className="text-gray-500 hover:text-white transition-colors"
+                                >
+                                    {sortOrder === 'asc' ? '↑' : '↓'}
+                                </button>
                             </div>
                             <div className="relative w-full md:w-80">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -532,21 +542,16 @@ const TeacherDashboard = ({ user, setUser }) => {
                                     </label>
                                     <input type="text" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all" placeholder="#React, #Frontend, #UI" value={newLu.tags} onChange={(e) => setNewLu({ ...newLu, tags: e.target.value })} />
                                 </div>
-                                <div className="p-1 bg-[#121212] rounded-2xl border border-white/10 flex">
-                                    <button
-                                        type="button"
-                                        onClick={() => setNewLu({ ...newLu, status: 'Published' })}
-                                        className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${newLu.status === 'Published' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                                <div>
+                                    <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Deployment Status</label>
+                                    <select
+                                        className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold text-white cursor-pointer"
+                                        value={newLu.status}
+                                        onChange={(e) => setNewLu({ ...newLu, status: e.target.value })}
                                     >
-                                        Live Now
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setNewLu({ ...newLu, status: 'Draft' })}
-                                        className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${newLu.status === 'Draft' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                                    >
-                                        Save Draft
-                                    </button>
+                                        <option value="Published">Live Now (Published)</option>
+                                        <option value="Draft">Internal Draft</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3 flex justify-between items-center">
@@ -633,7 +638,33 @@ const TeacherDashboard = ({ user, setUser }) => {
                         <form onSubmit={handleGradeSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Final Grade / Rating</label>
-                                <input type="text" placeholder="e.g. A+, Exceptional Performance" className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold" value={feedbackData.grade} onChange={(e) => setFeedbackData({ ...feedbackData, grade: e.target.value })} required />
+                                <select
+                                    className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold text-white mb-2"
+                                    value={['A+', 'A', 'B+', 'B', 'C', 'RA'].includes(feedbackData.grade) ? feedbackData.grade : 'Other'}
+                                    onChange={(e) => {
+                                        if (e.target.value !== 'Other') {
+                                            setFeedbackData({ ...feedbackData, grade: e.target.value });
+                                        }
+                                    }}
+                                >
+                                    <option value="A+">A+ (Exceptional)</option>
+                                    <option value="A">A (Excellent)</option>
+                                    <option value="B+">B+ (Very Good)</option>
+                                    <option value="B">B (Good)</option>
+                                    <option value="C">C (Satisfactory)</option>
+                                    <option value="RA">RA (Requires Attention)</option>
+                                    <option value="Other">Other / Custom</option>
+                                </select>
+                                {!['A+', 'A', 'B+', 'B', 'C', 'RA'].includes(feedbackData.grade) && (
+                                    <input
+                                        type="text"
+                                        placeholder="Enter custom grade..."
+                                        className="w-full bg-[#121212] border border-white/10 rounded-2xl px-5 py-4 focus:border-red-600 outline-none transition-all font-bold mt-2"
+                                        value={feedbackData.grade === 'Other' ? '' : feedbackData.grade}
+                                        onChange={(e) => setFeedbackData({ ...feedbackData, grade: e.target.value })}
+                                        required
+                                    />
+                                )}
                             </div>
                             <div>
                                 <label className="block text-xs font-black uppercase text-gray-500 tracking-widest mb-3">Personalized Comments</label>

@@ -476,10 +476,17 @@ const StudentDashboard = ({ user, setUser }) => {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2 w-full xl:w-auto bg-[#121212] p-1.5 rounded-[24px]">
-                                                <button onClick={() => updateStatus(lu.id, 'To Do')} className={`flex-1 xl:flex-none px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${lu.status === 'To Do' ? 'bg-[#1E1E1E] text-white shadow-xl' : 'text-gray-600 hover:text-white'}`}>Reset</button>
-                                                <button onClick={() => updateStatus(lu.id, 'In Progress')} className={`flex-1 xl:flex-none px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${lu.status === 'In Progress' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-900/20' : 'text-yellow-600 hover:text-yellow-500'}`}>Study</button>
-                                                <button onClick={() => updateStatus(lu.id, 'Completed')} className={`flex-1 xl:flex-none px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${lu.status === 'Completed' ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' : 'text-green-600 hover:text-green-500'}`}>Finish</button>
+                                            <div className="w-full xl:w-auto bg-[#121212] px-4 py-2 rounded-[24px] border border-white/5 flex items-center gap-3">
+                                                <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest ml-1">Status:</span>
+                                                <select
+                                                    value={lu.status}
+                                                    onChange={(e) => updateStatus(lu.id, e.target.value)}
+                                                    className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-white outline-none cursor-pointer hover:text-red-500 transition-colors py-1 pr-4"
+                                                >
+                                                    <option value="To Do" className="bg-[#1E1E1E]">To Do</option>
+                                                    <option value="In Progress" className="bg-[#1E1E1E]">In Progress</option>
+                                                    <option value="Completed" className="bg-[#1E1E1E]">Completed</option>
+                                                </select>
                                             </div>
                                         </div>
 
