@@ -83,6 +83,15 @@ const Login = ({ setUser }) => {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/forgot-password')}
+                            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                            Forgot Password
+                        </button>
+                    </div>
                     <button
                         type="submit"
                         className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-red-900/20"
