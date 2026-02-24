@@ -44,7 +44,7 @@ When something breaks, find your error below and follow the fix. If not listed, 
 ### ❌ CORS Error: "blocked by CORS policy"
 **What it means:** Frontend can't talk to backend
 
-**Full error:** `Access to XMLHttpRequest at 'http://localhost:5000/api/...' from origin 'http://localhost:5173' has been blocked by CORS policy`
+**Full error:** `Access to XML Http Request at 'http://localhost:5000/api/...' from origin 'http://localhost:5173' has been blocked by CORS policy`
 
 **Fixes:**
 
@@ -77,7 +77,7 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:5174,https://your-site.netli
 // In frontend, open DevTools Console:
 console.log(localStorage.getItem('token'));
 
-// Should show: eyJhbGciOiJIUzI1NiIs...
+// Should show: eyJhbGciOiJ........
 ```
 
 2. Token is missing → Login first
