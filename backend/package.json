@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "setup": "node setup_db.js",
+    "import": "node import_students.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
