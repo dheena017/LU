@@ -393,4 +393,8 @@ app.put('/api/profile/:userId', authenticateToken, async (req, res) => {
     }
 });
 
+// Import and setup mentor routes
+const setupMentorRoutes = require('./routes_mentor');
+setupMentorRoutes(app, authenticateToken, authorizeRole, io);
+
 server.listen(PORT, () => console.log(`Backend running at http://localhost:${PORT}`));
