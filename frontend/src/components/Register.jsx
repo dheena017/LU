@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../lib/config';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/register', formData);
+            await axios.post(`${API_BASE_URL}/api/register`, formData);
             toast.success('Account created successfully! Please login.', {
                 style: { borderRadius: '10px', background: '#333', color: '#fff' },
             });
@@ -100,16 +101,16 @@ const Register = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">My Batch</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">My Squad</label>
                             <select
                                 required
                                 className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none text-white transition-all"
                                 value={formData.batch}
                                 onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
                             >
-                                <option value="" disabled>Select a Batch</option>
-                                <option value="Web Dev 2024">Web Dev 2024</option>
-                                <option value="AI/ML 2024">AI/ML 2024</option>
+                                <option value="" disabled>Select a Squad</option>
+                                <option value="138">138</option>
+                                <option value="139">139</option>
                             </select>
                         </div>
                     </div>

@@ -48,3 +48,24 @@ CREATE TABLE IF NOT EXISTS user_activity (
 INSERT INTO users (id, name, email, password, role) 
 VALUES ('t1', 'Prof. Kalvium', 'teacher@kalvium.com', '$2b$10$AnDlaD2bp8DZ8eqUhAYkvOjL3Q7Irg/pHRqumP2LoHgH6iorYyF9a', 'teacher')
 ON CONFLICT (id) DO NOTHING;
+
+-- 6. Row Level Security (Supabase/PostgREST Safety)
+-- Enable RLS on exposed tables so Supabase security checks pass.
+ALTER TABLE IF EXISTS public.learning_units ENABLE ROW LEVEL SECURITY;
+
+-- Read access for public clients.
+DROP POLICY IF EXISTS learning_units_public_read ON public.learning_units;
+CREATE POLICY learning_units_public_read
+ON public.learning_units
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+-- Write access restricted to authenticated clients.
+DROP POLICY IF EXISTS learning_units_authenticated_write ON public.learning_units;
+CREATE POLICY learning_units_authenticated_write
+ON public.learning_units
+FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);

@@ -39,8 +39,9 @@ import Sidebar from './Sidebar';
 import Profile from './Profile';
 import LoadingPage from './LoadingPage';
 import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../lib/config';
 
-const socket = io('http://localhost:5000');
+const socket = io(SOCKET_URL);
 
 const calculateStreaks = (activityArray = []) => {
     if (!activityArray || activityArray.length === 0) return { current: 0, best: 0, total: 0 };
@@ -95,8 +96,8 @@ const TeacherDashboard = ({ user, setUser }) => {
     const fetchData = useCallback(async () => {
         try {
             const [studentsRes, lusRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/teacher/students', getAuthHeader()),
-                axios.get('http://localhost:5000/api/lus', getAuthHeader())
+                axios.get(`${API_BASE_URL}/api/teacher/students`, getAuthHeader()),
+                axios.get(`${API_BASE_URL}/api/lus`, getAuthHeader())
             ]);
             setStudents(studentsRes.data || []);
             setLus(lusRes.data || []);
@@ -140,7 +141,7 @@ const TeacherDashboard = ({ user, setUser }) => {
                 ...newLu,
                 tags: newLu.tags.split(',').map(tag => tag.trim().replace('#', '')).filter(tag => tag)
             };
-            await axios.post('http://localhost:5000/api/lus', payload, getAuthHeader());
+            await axios.post(`${API_BASE_URL}/api/lus`, payload, getAuthHeader());
             setNewLu({ title: '', module: '', dueDate: '', assignedTo: [], status: 'Published', tags: '' });
             toast.success(payload.status === 'Draft' ? 'Saved as Draft' : 'Learning Unit Published!', {
                 icon: '🚀',
@@ -154,7 +155,7 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     const handleDeleteLu = async (luId) => {
         try {
-            await axios.delete(`http://localhost:5000/api/lus/${luId}`, getAuthHeader());
+            await axios.delete(`${API_BASE_URL}/api/lus/${luId}`, getAuthHeader());
             toast.success('Learning Unit deleted successfully');
             setDeleteTarget(null);
             fetchData();
@@ -166,7 +167,7 @@ const TeacherDashboard = ({ user, setUser }) => {
     const handleGradeSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:5000/api/teacher/grade/${gradingTarget.studentId}/${gradingTarget.luId}`, feedbackData, getAuthHeader());
+            await axios.put(`${API_BASE_URL}/api/teacher/grade/${gradingTarget.studentId}/${gradingTarget.luId}`, feedbackData, getAuthHeader());
             toast.success(`Feedback sent to ${gradingTarget.studentName}!`);
             setGradingTarget(null);
             setFeedbackData({ feedback: '', grade: '' });

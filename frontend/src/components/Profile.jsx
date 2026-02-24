@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { User, Mail, FileText, Save, ArrowLeft, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../lib/config';
 
 const Profile = ({ user, setUser, onBack }) => {
     console.log("[DEBUG] Profile rendering with user:", user);
@@ -19,7 +20,7 @@ const Profile = ({ user, setUser, onBack }) => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.put(`http://localhost:5000/api/profile/${user.id}`, formData, {
+            const res = await axios.put(`${API_BASE_URL}/api/profile/${user.id}`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(res.data);

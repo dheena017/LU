@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, GraduationCap, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../lib/config';
 
 const Login = ({ setUser }) => {
     const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ const Login = ({ setUser }) => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5000/api/login', { email, password });
+            const response = await axios.post(`${API_BASE_URL}/api/login`, { email, password });
             const { user, token } = response.data;
             setUser(user);
             localStorage.setItem('user', JSON.stringify(user));

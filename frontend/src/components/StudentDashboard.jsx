@@ -24,8 +24,9 @@ import Profile from './Profile';
 import LoadingPage from './LoadingPage';
 import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
+import { API_BASE_URL, SOCKET_URL } from '../lib/config';
 
-const socket = io('http://localhost:5000');
+const socket = io(SOCKET_URL);
 
 const calculateStreaks = (activityArray = []) => {
     if (activityArray.length === 0) return { current: 0, best: 0, total: 0 };
@@ -106,7 +107,7 @@ const StudentDashboard = ({ user, setUser }) => {
     const fetchProfile = useCallback(async () => {
         if (!user?.id) return;
         try {
-            const res = await axios.get(`http://localhost:5000/api/profile/${user.id}`, getAuthHeader());
+            const res = await axios.get(`${API_BASE_URL}/api/profile/${user.id}`, getAuthHeader());
             setUserData(res.data);
         } catch (err) {
             if (err.response?.status === 401 || err.response?.status === 403) {
@@ -122,8 +123,8 @@ const StudentDashboard = ({ user, setUser }) => {
         setFetchError(null);
         try {
             const [lusRes, userRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/student/${user.id}/lus`, getAuthHeader()),
-                axios.get(`http://localhost:5000/api/profile/${user.id}`, getAuthHeader())
+                axios.get(`${API_BASE_URL}/api/student/${user.id}/lus`, getAuthHeader()),
+                axios.get(`${API_BASE_URL}/api/profile/${user.id}`, getAuthHeader())
             ]);
             console.log(`[NETWORK] Received ${lusRes.data.length} LUs`);
             setLus(lusRes.data);
@@ -173,7 +174,7 @@ const StudentDashboard = ({ user, setUser }) => {
 
     const updateStatus = async (luId, status) => {
         try {
-            await axios.put(`http://localhost:5000/api/student/${user.id}/lus/${luId}`, { status }, getAuthHeader());
+            await axios.put(`${API_BASE_URL}/api/student/${user.id}/lus/${luId}`, { status }, getAuthHeader());
 
             if (status === 'Completed') {
                 confetti({

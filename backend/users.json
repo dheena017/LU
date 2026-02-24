@@ -12,7 +12,7 @@
     "email": "student1@kalvium.com",
     "password": "pass",
     "role": "student",
-    "batch": "Web Dev 2024",
+    "batch": "138",
     "completedLUs": [],
     "progress": {
       "1": {
@@ -29,7 +29,7 @@
     "email": "student2@kalvium.com",
     "password": "pass",
     "role": "student",
-    "batch": "AI/ML 2024",
+    "batch": "139",
     "completedLUs": [],
     "learningActivity": [],
     "progress": {
@@ -51,7 +51,7 @@
     "email": "student3@kalvium.com",
     "password": "pass",
     "role": "student",
-    "batch": "Web Dev 2024",
+    "batch": "138",
     "completedLUs": [],
     "learningActivity": []
   },
@@ -61,7 +61,7 @@
     "email": "student4@kalvium.com",
     "password": "pass",
     "role": "student",
-    "batch": "AI/ML 2024",
+    "batch": "139",
     "completedLUs": [],
     "learningActivity": []
   }

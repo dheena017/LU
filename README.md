@@ -4,6 +4,15 @@ A high-performance, professional Learning Unit (LU) tracking system designed for
 
 ---
 
+## 📖 Documentation Guide
+
+**New to this project?** Start here in order:
+
+1. **[QUICKSTART.md](QUICKSTART.md)** ⚡ - Copy-paste commands to get running (5 min)
+2. **[LEARNING.md](LEARNING.md)** 📚 - Full tutorial: How to make changes (1 hour)
+3. **[DEPLOYMENT.md](DEPLOYMENT.md)** 🚀 - Deploy to Netlify & production (Advanced)
+4. **[README.md](README.md)** - Project overview (this file)
+
 ## 🛠️ Quick Start Guide
 
 To run the full system, open **three separate terminals**:
@@ -23,6 +32,34 @@ npm run dev
 ```
 *   **Port**: `5173`
 *   **Role**: Premium React interface with role-based routing and live data syncing.
+
+### 🌐 Deploy Frontend to Netlify
+
+The `frontend` app is ready for Netlify deployment (SPA routing + build config already included).
+
+1. Push this repo to GitHub.
+2. In Netlify: **Add new site** → **Import from Git**.
+3. Select the repository and set:
+	- **Base directory**: `frontend`
+	- **Build command**: `npm run build`
+	- **Publish directory**: `dist`
+4. Add Netlify environment variables:
+	- `VITE_API_BASE_URL` = your deployed backend URL (example: `https://your-backend.onrender.com`)
+	- `VITE_SOCKET_URL` = same backend URL (or your socket endpoint)
+5. Deploy.
+
+> ⚠️ Netlify hosts the React frontend only. The Node/Express backend should be deployed on a backend host (Render/Railway/EC2/etc).
+
+### 🔌 Backend CORS Setup for Production
+
+After backend deployment, allow your Netlify domain in CORS:
+
+```powershell
+# Example environment variable on your backend host
+CORS_ORIGINS=https://your-site.netlify.app,http://localhost:5173
+```
+
+Also ensure `JWT_SECRET` is set in backend environment variables.
 
 ### 3. **Admin Panel** (Mathesar Data Management)
 ```powershell
