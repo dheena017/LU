@@ -7,9 +7,11 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('teacher', 'student')),
+    role TEXT NOT NULL CHECK (role IN ('teacher', 'student', 'mentor')),
     batch TEXT,
     bio TEXT,
+    linkedin TEXT,
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -44,12 +46,29 @@ CREATE TABLE IF NOT EXISTS user_activity (
     UNIQUE(user_id, activity_date)
 );
 
--- 5. Initial Seed Data (Optional)
+-- 5. Subjects/Courses Table
+CREATE TABLE IF NOT EXISTS subjects (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Mentor-Subject Junction Table (Many-to-Many)
+-- Allows one mentor to teach multiple subjects
+CREATE TABLE IF NOT EXISTS mentor_subjects (
+    mentor_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    subject_id TEXT REFERENCES subjects(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (mentor_id, subject_id)
+);
+
+-- 7. Initial Seed Data (Optional)
 INSERT INTO users (id, name, email, password, role) 
 VALUES ('t1', 'Prof. Kalvium', 'teacher@kalvium.com', '$2b$10$AnDlaD2bp8DZ8eqUhAYkvOjL3Q7Irg/pHRqumP2LoHgH6iorYyF9a', 'teacher')
 ON CONFLICT (id) DO NOTHING;
 
--- 6. Row Level Security (Supabase/PostgREST Safety)
+-- 8. Row Level Security (Supabase/PostgREST Safety)
 -- Enable RLS on exposed tables so Supabase security checks pass.
 ALTER TABLE IF EXISTS public.learning_units ENABLE ROW LEVEL SECURITY;
 
