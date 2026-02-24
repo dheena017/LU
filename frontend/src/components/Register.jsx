@@ -109,8 +109,8 @@ const Register = () => {
                                 onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
                             >
                                 <option value="" disabled>Select a Squad</option>
-                                <option value="138">138</option>
-                                <option value="139">139</option>
+                                <option value="S138">S138</option>
+                                <option value="S139">S139</option>
                             </select>
                         </div>
                     </div>

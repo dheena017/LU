@@ -29,7 +29,7 @@
     "email": "student2@kalvium.com",
     "password": "pass",
     "role": "student",
-    "batch": "139",
+    "batch": "S139",
     "completedLUs": [],
     "learningActivity": [],
     "progress": {
@@ -61,7 +61,7 @@
     "email": "student4@kalvium.com",
     "password": "pass",
     "role": "student",
-    "batch": "139",
+    "batch": "S139",
     "completedLUs": [],
     "learningActivity": []
   }

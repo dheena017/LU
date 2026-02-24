@@ -30,7 +30,7 @@ const Sidebar = ({ role, activeTab, setActiveTab, user, handleLogout }) => {
     const links = role === 'teacher' ? teacherLinks : studentLinks;
 
     return (
-        <aside className="w-64 min-h-screen bg-[#1E1E1E] border-r border-white/5 flex flex-col sticky top-0">
+        <aside className="w-64 min-h-screen h-full bg-[#1E1E1E] border-r border-white/5 flex flex-col sticky top-0">
             {/* Branding */}
             <div className="p-8">
                 <div className="flex items-center gap-3">

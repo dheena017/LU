@@ -15,6 +15,7 @@ import {
     ArrowUpDown,
     User,
     Bell,
+    ChevronRight,
     Tag,
     Square,
     TrendingUp,
@@ -79,6 +80,7 @@ const TeacherDashboard = ({ user, setUser }) => {
     const [selectedBatch, setSelectedBatch] = useState('All Classes');
     const [loading, setLoading] = useState(true);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const navigate = useNavigate();
 
     const handleLogout = useCallback(() => {
@@ -256,22 +258,32 @@ const TeacherDashboard = ({ user, setUser }) => {
 
     return (
         <div className="flex min-h-screen bg-[#121212] text-white font-sans">
-            <Sidebar
-                role="teacher"
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                user={user}
-                handleLogout={handleLogout}
-            />
+            <div className={`${sidebarOpen ? 'w-64' : 'w-0'} min-h-screen self-stretch transition-all duration-300 overflow-hidden flex-shrink-0`}>
+                <Sidebar
+                    role="teacher"
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    user={user}
+                    handleLogout={handleLogout}
+                />
+            </div>
 
             <main className="flex-1 p-8 overflow-y-auto">
                 {/* Header with Search (Universal) */}
                 <div className="flex justify-between items-center mb-8">
-                    <div>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="p-3 rounded-xl bg-[#1E1E1E] border border-white/5 hover:border-red-600/50 text-gray-400 hover:text-red-500 transition-all"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                        <div>
                         <h2 className="text-3xl font-black tracking-tight capitalize">
                             {activeTab.replace(/([A-Z])/g, ' $1')}
                         </h2>
                         <p className="text-gray-500 text-sm">Managing Kalvium LUs for {(students || []).length} students.</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <select
