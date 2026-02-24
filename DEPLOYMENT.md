@@ -220,6 +220,26 @@ git push origin main
 
 Your app uses `.env` files to store secrets (never commit these!).
 
+### **Supabase CLI Token (Safe Workflow)**
+Use a local file that is ignored by git:
+
+```powershell
+# From project root
+Copy-Item .env.example .env.local
+# Edit .env.local and set SUPABASE_ACCESS_TOKEN=...
+
+# Run Supabase with secure wrapper (loads .env.local automatically)
+.\scripts\supabase.ps1 projects list
+.\scripts\supabase.ps1 db push
+```
+
+If you prefer not to store token in a file:
+
+```powershell
+$env:SUPABASE_ACCESS_TOKEN = Read-Host "Enter Supabase token" -MaskInput
+npx --yes supabase projects list
+```
+
 ### **Backend .env** (`backend/.env`)
 ```env
 DATABASE_URL=postgresql://user:password@db.supabase.co:5432/postgres

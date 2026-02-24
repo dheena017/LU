@@ -116,34 +116,35 @@ netlify open:site
 
 ## 🚀 Part 2: Setup Supabase CLI
 
-### Step 2.1: Install Supabase CLI
+### Step 2.1: Use Supabase CLI with `npx` (Recommended)
 
 ```bash
-# Install globally using npm
-npm install -g supabase
-
-# Or using Windows Chocolatey (if installed):
-choco install supabase-cli
-
-# Verify installation
-supabase --version
+# Run without global installation
+npx --yes supabase --version
 # Should show: supabase version X.X.X
 ```
 
-### Step 2.2: Login to Supabase
+If global install fails on your machine, keep using `npx --yes supabase ...` for all commands.
 
-```bash
-# Start login
-supabase login
+### Step 2.2: Authenticate Safely (No Token in History)
 
-# Browser will open:
-# 1. Go to https://supabase.com
-# 2. Sign in with your account
-# 3. Create personal access token:
-#    - Go to Account Settings → Tokens
-#    - Create new token with "admin" scope
-#    - Copy token
-# 4. Paste in terminal when asked
+```powershell
+# In project root, create local env from template once
+Copy-Item .env.example .env.local
+
+# Open .env.local and paste your token into SUPABASE_ACCESS_TOKEN=
+# OR set token for current shell without echoing it:
+$env:SUPABASE_ACCESS_TOKEN = Read-Host "Enter Supabase token" -MaskInput
+```
+
+Then run CLI commands with either:
+
+```powershell
+# Wrapper script (loads .env.local automatically)
+.\scripts\supabase.ps1 projects list
+
+# Or direct npx call if token already in env
+npx --yes supabase projects list
 ```
 
 ### Step 2.3: Initialize Supabase Project
@@ -153,7 +154,7 @@ supabase login
 cd c:\Users\dheen\kalvium-lu-tracker
 
 # Initialize Supabase
-supabase init
+npx --yes supabase init
 
 # This creates:
 # - supabase/ folder
@@ -169,7 +170,7 @@ supabase init
 
 ```bash
 # If you already have a Supabase project:
-supabase link --project-ref your_project_ref
+npx --yes supabase link --project-ref your_project_ref
 
 # Find project ref at:
 # https://supabase.com/dashboard/projects
@@ -181,7 +182,7 @@ supabase link --project-ref your_project_ref
 
 ```bash
 # Start local database server (requires Docker)
-supabase start
+npx --yes supabase start
 
 # First time takes ~2 minutes to download Docker
 # You'll see:
@@ -190,7 +191,7 @@ supabase start
 # → DB URL: postgresql://postgres:postgres@localhost:5432/postgres
 
 # Stop it later with:
-supabase stop
+npx --yes supabase stop
 ```
 
 ---
@@ -199,33 +200,33 @@ supabase stop
 
 ```bash
 # Authentication
-supabase login           # Login to account
-supabase logout          # Logout
+npx --yes supabase login           # Login to account
+npx --yes supabase logout          # Logout
 
 # Project
-supabase init            # Initialize new project
-supabase link            # Link to existing cloud project
-supabase projects:list   # List your projects
+npx --yes supabase init            # Initialize new project
+npx --yes supabase link            # Link to existing cloud project
+npx --yes supabase projects list   # List your projects
 
 # Local Development
-supabase start           # Start local dev database
-supabase stop            # Stop local database
-supabase db:reset        # Reset local database
+npx --yes supabase start           # Start local dev database
+npx --yes supabase stop            # Stop local database
+npx --yes supabase db reset        # Reset local database
 
 # Migrations
-supabase migration:new   # Create new migration
-supabase migration:list  # List all migrations
-supabase db:push         # Push migrations to cloud
+npx --yes supabase migration new   # Create new migration
+npx --yes supabase migration list  # List all migrations
+npx --yes supabase db push         # Push migrations to cloud
 
 # Database
-supabase db:pull         # Pull schema from cloud
-supabase db:dump         # Export database
+npx --yes supabase db pull         # Pull schema from cloud
+npx --yes supabase db dump         # Export database
 
 # Deployment
-supabase db:migrate      # Run migrations on cloud
+npx --yes supabase db push         # Run migrations on cloud
 
 # Status
-supabase status          # Show project status
+npx --yes supabase status          # Show project status
 ```
 
 ---

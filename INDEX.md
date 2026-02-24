@@ -32,11 +32,16 @@ This file helps you find the right guide for what you need to do.
 ---
 
 ### "I want to deploy to Netlify/Production"
-→ **Read:** [DEPLOYMENT.md](DEPLOYMENT.md)
-- Environment variables setup
-- How Netlify auto-deploys
-- How backend deployment works
-- Advanced deployment topics
+→ **Read:** [DEPLOY_NOW.md](DEPLOY_NOW.md) ← **Start here!**
+- Step-by-step deployment (20 mins)
+- Backend on Render.com
+- Frontend on Netlify
+- Real working examples
+
+Or [DEPLOYMENT.md](DEPLOYMENT.md) for deep dive:
+- Architecture diagram
+- How changes auto-deploy
+- Local development workflow
 
 ### "I need to setup Netlify & Supabase CLI tools"
 → **Read:** [CLI_SETUP.md](CLI_SETUP.md)
@@ -64,7 +69,8 @@ This file helps you find the right guide for what you need to do.
 | **QUICKSTART.md** | Copy-paste commands | Want to run it now |
 | **LEARNING.md** | Full tutorial | Want to understand how it works |
 | **CLI_SETUP.md** | Install Netlify & Supabase CLI | Setting up deployment tools |
-| **DEPLOYMENT.md** | Production guide | Ready to deploy |
+| **DEPLOY_NOW.md** | ⭐ Production deploy (20 mins) | **Ready to deploy RIGHT NOW** |
+| **DEPLOYMENT.md** | Deep-dive deployment guide | Want to understand deployment |
 | **TROUBLESHOOTING.md** | Fix problems | Something is broken |
 | **This file** | Navigation | Don't know where to start |
 
