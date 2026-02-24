@@ -63,6 +63,22 @@ CREATE TABLE IF NOT EXISTS mentor_subjects (
     PRIMARY KEY (mentor_id, subject_id)
 );
 
+-- 7. Password Reset Tokens
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token
+    ON password_reset_tokens (token_hash);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user
+    ON password_reset_tokens (user_id);
+
 -- 7. Initial Seed Data (Optional)
 INSERT INTO users (id, name, email, password, role) 
 VALUES ('t1', 'Prof. Kalvium', 'teacher@kalvium.com', '$2b$10$AnDlaD2bp8DZ8eqUhAYkvOjL3Q7Irg/pHRqumP2LoHgH6iorYyF9a', 'teacher')

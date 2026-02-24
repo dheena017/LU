@@ -8,6 +8,7 @@
     "dev": "node server.js",
     "setup": "node setup_db.js",
     "migrate": "node migrate.js",
+    "migrate-reset": "node migrate_password_reset.js",
     "import": "node import_students.js",
     "import-mentors": "node import_mentors.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,6 +26,7 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^6.9.16",
     "pg": "^8.18.0",
     "socket.io": "^4.8.3"
   }

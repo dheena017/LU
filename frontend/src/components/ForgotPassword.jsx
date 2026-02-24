@@ -2,16 +2,23 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+import { API_BASE_URL } from '../lib/config';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        toast.success('If this email exists, a reset link will be sent.', {
-            style: { borderRadius: '10px', background: '#333', color: '#fff' },
-        });
+        try {
+            await axios.post(`${API_BASE_URL}/api/forgot-password`, { email });
+            toast.success('If this email exists, a reset link will be sent.', {
+                style: { borderRadius: '10px', background: '#333', color: '#fff' },
+            });
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to send reset link.');
+        }
     };
 
     return (

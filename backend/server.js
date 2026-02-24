@@ -8,17 +8,37 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const db = require('./db');
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM = process.env.SMTP_FROM || 'Kalvium LU Tracker <no-reply@kalvium.com>';
 
 if (!JWT_SECRET) {
     console.error('Missing JWT_SECRET environment variable. Refusing to start.');
     process.exit(1);
 }
+
+const smtpConfigured = SMTP_HOST && SMTP_USER && SMTP_PASS;
+const mailer = smtpConfigured ? nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+    },
+}) : null;
 
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:4173')
     .split(',')
@@ -132,6 +152,85 @@ app.post('/api/login', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Database error' });
+    }
+});
+
+// Auth: Forgot Password (send reset email)
+app.post('/api/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required.' });
+
+    try {
+        const result = await db.query('SELECT id, email FROM users WHERE email = $1', [email]);
+        const user = result.rows[0];
+
+        if (!user) {
+            return res.json({ success: true });
+        }
+
+        if (!mailer) {
+            return res.status(500).json({ message: 'Email service not configured.' });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+        await db.query(
+            `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+             VALUES ($1, $2, $3)`,
+            [user.id, tokenHash, expiresAt]
+        );
+
+        const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
+        await mailer.sendMail({
+            from: SMTP_FROM,
+            to: user.email,
+            subject: 'Reset your password',
+            html: `
+                <p>You requested a password reset.</p>
+                <p>Click the link below to set a new password:</p>
+                <p><a href="${resetLink}">${resetLink}</a></p>
+                <p>This link expires in 1 hour.</p>
+            `,
+        });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to send reset email.' });
+    }
+});
+
+// Auth: Reset Password
+app.post('/api/reset-password', async (req, res) => {
+    const { token, password } = req.body;
+    if (!token || !password) {
+        return res.status(400).json({ message: 'Token and password are required.' });
+    }
+
+    try {
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const result = await db.query(
+            `SELECT id, user_id, expires_at, used_at
+             FROM password_reset_tokens
+             WHERE token_hash = $1`,
+            [tokenHash]
+        );
+
+        const reset = result.rows[0];
+        if (!reset || reset.used_at || new Date(reset.expires_at) < new Date()) {
+            return res.status(400).json({ message: 'Reset token is invalid or expired.' });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        await db.query('UPDATE users SET password = $1 WHERE id = $2', [passwordHash, reset.user_id]);
+        await db.query('UPDATE password_reset_tokens SET used_at = $1 WHERE id = $2', [new Date(), reset.id]);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to reset password.' });
     }
 });
 
